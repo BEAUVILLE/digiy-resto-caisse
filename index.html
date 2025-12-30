@@ -1,232 +1,1525 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1, user-scalable=no" />
-  <title>Pilote de tableau de bord numérique — DIGIY DRIVER (0% commission)</title>
-  <meta name="description" content="Pilote chauffeur DIGIY DRIVER : partage GPS, statuts (Disponible/Occupé/Hors-ligne), envoi temps réel vers l’API. 0% commission, tout pour le pro." />
-  <meta name="theme-color" content="#0f0f10" />
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1, user-scalable=no">
+  <title>RESTO PRO — Gestion de Restaurant</title>
+  <meta name="theme-color" content="#faf7f0">
+  
+  <!-- PWA Manifest -->
+  <link rel="manifest" href="manifest.json">
+  
+  <!-- Apple Touch Icons -->
+  <link rel="apple-touch-icon" sizes="152x152" href="icon-152.png">
+  <link rel="apple-touch-icon" sizes="192x192" href="icon-192.png">
+  
+  <!-- Apple Meta Tags -->
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="RESTO PRO">
+
+  <!-- Supabase JS v2 -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  
   <style>
     :root{
-      --bg:#0f0f10; --card:#17181a; --ink:#ffffff; --muted:#b4b7bd;
-      --gold:#D4AF37; --ok:#4CAF50; --warn:#FF9800; --danger:#F44336;
+      --bg:#faf7f0; 
+      --paper:#ffffff; 
+      --card:#ffffff; 
+      --ink:#1a1c1f; 
+      --muted:#47505d; 
+      --line:#e1d8c6;
+      --gold:#d4af37; 
+      --gold-2:#b8952f; 
+      --ok:#15803d; 
+      --warn:#b45309; 
+      --bad:#b91c1c; 
+      --info:#1d4ed8;
+      --sand:#fff7e6; 
+      --sand-2:#fdf0d7; 
+      --accent:#ffd166;
     }
-    *{box-sizing:border-box}
+    *{box-sizing:border-box} 
     html,body{height:100%}
     body{
-      margin:0; background:var(--bg); color:var(--ink); font-family: system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, 'Helvetica Neue', Arial, 'Noto Sans', 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol';
-      -webkit-font-smoothing:antialiased; -moz-osx-font-smoothing:grayscale;
+      margin:0;
+      background:linear-gradient(180deg,#ffffff,#faf7f0);
+      color:var(--ink);
+      font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Cantarell,"Helvetica Neue",Arial
     }
-    .wrap{max-width:880px; margin:0 auto; padding:16px;}
-    .header{
-      border:1px solid rgba(212,175,55,.35);
-      border-radius:16px; padding:16px;
-      background:linear-gradient(135deg,#141517 0%, #0e0f11 100%);
-      box-shadow: 0 6px 24px rgba(0,0,0,.55), inset 0 0 0 1px rgba(255,255,255,.02);
+    .app{display:flex;flex-direction:column;min-height:100vh}
+    header{
+      position:sticky;top:0;z-index:20;
+      backdrop-filter:saturate(1.2) blur(8px);
+      background:rgba(255,255,255,.92);
+      border-bottom:1px solid var(--line)
     }
-    h1{margin:0 0 4px; font-size: clamp(20px, 2.6vw, 28px); color:var(--gold); letter-spacing:.2px;}
-    .sub{margin:0; opacity:.85; color:var(--muted); font-size:14px}
-    .grid{display:grid; gap:12px; grid-template-columns: 1fr; margin-top:12px}
-    @media (min-width: 760px){ .grid{grid-template-columns: 1fr 1fr} }
-    .card{
-      background:var(--card); border:1px solid #26272b; border-radius:14px; padding:14px;
-      box-shadow: 0 4px 16px rgba(0,0,0,.35), inset 0 0 0 1px rgba(255,255,255,.02);
+    .hwrap{
+      display:flex;gap:10px;align-items:center;justify-content:space-between;
+      padding:12px 14px;max-width:1200px;margin:0 auto
     }
-    .row{display:flex; gap:8px; flex-wrap:wrap}
-    input, select, button{
-      background:#0e0f11; color:#fff; border:1px solid #2a2b2f; border-radius:10px; padding:10px 12px; font-size:14px;
+    h1{margin:0;font-size:18px;letter-spacing:.3px;font-weight:900}
+    .brand{display:flex;gap:10px;align-items:center;cursor:pointer}
+    .logo{
+      width:28px;height:28px;border-radius:10px;
+      background:linear-gradient(135deg,#fff3c4,#ffe08a);
+      display:grid;place-items:center;
+      border:1px solid #ead8a6;
+      box-shadow:0 0 18px rgba(212,175,55,.25) inset
     }
-    input::placeholder{color:#6b6f76}
-    button{cursor:pointer; transition: transform .05s ease, opacity .2s ease}
-    button:active{transform: translateY(1px)}
-    .btn{background:#1a1b1f}
-    .btn-ok{background:#1b3b1f; border-color:#2a5f36}
-    .btn-warn{background:#3a2b13; border-color:#7a4f12}
-    .btn-danger{background:#351717; border-color:#7a2a2a}
-    .muted{color:var(--muted)}
-    .pill{display:inline-block; padding:6px 10px; border-radius:999px; border:1px solid #2a2b2f; background:#0e0f11; font-size:12px}
-    code{background:#0e0f11; padding:2px 6px; border-radius:6px; border:1px solid #2a2b2f}
-    .footer{opacity:.7; font-size:12px; margin-top:14px; text-align:center}
-    .brand{font-weight:700; letter-spacing:.3px}
+    .logo::after{
+      content:"🍽️";
+      font-size:14px;line-height:1
+    }
+    .subtitle{font-size:12px;color:#6b7280}
+    .actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+    .btn{
+      border:1px solid var(--line);
+      background:#fff;
+      color:var(--ink);
+      padding:8px 12px;
+      border-radius:12px;
+      font-weight:800;
+      cursor:pointer;
+      font-size:12px;
+    }
+    .btn:hover{box-shadow:0 1px 0 rgba(26,28,31,.06)}
+    .btn.gold{
+      background:linear-gradient(135deg,#fff7d1,#ffe9a6);
+      border-color:#ead8a6;
+      color:#5a4600
+    }
+    .btn.warn{background:#fff1db;border-color:#f3d3a2;color:#7a4700}
+    .btn.ok{background:#eaf9ee;border-color:#cdebd6;color:#065f46}
+    .btn.info{background:#e8f0ff;border-color:#c7d6ff;color:#0b3ea9}
+    .btn.ghost{background:transparent}
+    main{flex:1;max-width:1200px;margin:0 auto;padding:16px}
+    .zones{display:flex;flex-direction:column;gap:16px}
+    .zone h2{
+      margin:0 0 10px 0;
+      font-size:15px;
+      font-weight:900;
+      color:#2b2f36
+    }
+    .grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+    @media(min-width:640px){.grid{grid-template-columns:repeat(3,1fr)}}
+    @media(min-width:1000px){.grid{grid-template-columns:repeat(6,1fr)}}
+    .tile{
+      position:relative;
+      border-radius:16px;
+      padding:12px;
+      min-height:100px;
+      cursor:pointer;
+      background:linear-gradient(135deg,#ffffff,#fff9ed);
+      border:1px solid var(--line)
+    }
+    .tile.salle{background:linear-gradient(135deg,#ffffff,#eef7ff)}
+    .tile.etage{background:linear-gradient(135deg,#ffffff,#f4efff)}
+    .tile.terr1{background:linear-gradient(135deg,#ffffff,#fff4e6)}
+    .tile.terr2{background:linear-gradient(135deg,#ffffff,#ffefe9)}
+    .bar{
+      position:absolute;right:0;top:0;width:6px;height:100%;
+      border-top-right-radius:16px;border-bottom-right-radius:16px;
+      background:#e5e7eb
+    }
+    .bar.occ{background:var(--bad)} 
+    .bar.ready{background:var(--ok)} 
+    .bar.add{background:var(--warn)}
+    .num{font-size:32px;font-weight:1000}
+    .zoneName{font-size:12px;color:#6b7280;margin-top:2px}
+    .line{height:1px;background:var(--line);margin:6px 0}
+    .total{font-size:18px;font-weight:900}
+    .muted{color:#6b7280;font-size:12px}
+    .footer{
+      padding:14px;
+      border-top:1px solid var(--line);
+      font-size:12px;
+      color:#6b7280;
+      text-align:center;
+      background:#fff
+    }
+    
+    /* Zone Tabs (Mobile) */
+    .zoneTabs{
+      display:flex;gap:8px;overflow-x:auto;
+      padding:12px 0;margin-bottom:16px;
+      -webkit-overflow-scrolling:touch;
+      scrollbar-width:none
+    }
+    .zoneTabs::-webkit-scrollbar{display:none}
+    .zoneTabs .tab{
+      border:2px solid var(--line);
+      background:#fff;
+      color:var(--muted);
+      padding:10px 16px;
+      border-radius:12px;
+      font-weight:800;
+      cursor:pointer;
+      white-space:nowrap;
+      font-size:14px;
+      transition:all .2s ease;
+      flex-shrink:0
+    }
+    .zoneTabs .tab:hover{
+      border-color:var(--gold);
+      transform:translateY(-1px)
+    }
+    .zoneTabs .tab.active{
+      background:linear-gradient(135deg,#fff7d1,#ffe9a6);
+      border-color:var(--gold);
+      color:#5a4600;
+      box-shadow:0 2px 8px rgba(212,175,55,.2)
+    }
+    
+    /* Pagination Dots */
+    .pager{
+      display:flex;
+      justify-content:center;
+      align-items:center;
+      gap:12px;
+      margin-top:20px;
+      padding:12px
+    }
+    .pager .btn{padding:8px 14px;font-size:16px;min-width:44px}
+    .dots{display:flex;gap:8px;align-items:center}
+    .dot{
+      width:10px;height:10px;
+      border-radius:50%;
+      background:var(--line);
+      cursor:pointer;
+      transition:all .2s ease
+    }
+    .dot:hover{background:var(--gold-2)}
+    .dot.on{
+      background:var(--gold);
+      width:24px;
+      border-radius:5px;
+      box-shadow:0 0 0 4px rgba(212,175,55,.15)
+    }
+    
+    /* Overlay & Cards */
+    .overlay{
+      position:fixed;inset:0;
+      background:rgba(15,23,42,0.25);
+      backdrop-filter:blur(4px);
+      display:flex;align-items:center;justify-content:center;
+      z-index:40
+    }
+    .overlay .card{
+      max-width:900px;width:100%;
+      max-height:90vh;
+      overflow:auto;
+      background:#fff;
+      border-radius:18px;
+      padding:16px;
+      box-shadow:0 20px 60px rgba(15,23,42,0.35)
+    }
+    .row{display:flex;gap:12px;flex-wrap:wrap}
+    .col{flex:1 1 0}
+    h2{margin:0 0 8px 0;font-size:18px}
+    h3{margin:0 0 6px 0;font-size:15px}
+    h4{margin:6px 0 4px 0;font-size:13px}
+    .group{display:flex;gap:8px;flex-wrap:wrap}
+    .group input,
+    .group select{
+      flex:1 1 120px;
+      padding:6px 8px;
+      border-radius:8px;
+      border:1px solid var(--line);
+      font-size:13px
+    }
+    .list{font-size:13px}
+    table{width:100%;border-collapse:collapse;font-size:12px}
+    th,td{border-bottom:1px solid #eadfca;padding:4px 6px;text-align:left}
+    .table-wrap{max-height:260px;overflow:auto}
+    .kbd{
+      display:inline-block;
+      padding:2px 6px;
+      border-radius:4px;
+      border:1px solid #d4d4d4;
+      background:#f9fafb;
+      font-size:11px;
+      font-family:ui-monospace,Menlo,monospace
+    }
+    .pill{
+      display:inline-block;
+      padding:2px 6px;
+      border-radius:4px;
+      background:#f3f4f6;
+      font-size:10px;
+      margin-left:4px
+    }
+    .offline-banner{
+      background:#fff1db;
+      border:1px solid #f3d3a2;
+      color:#7a4700;
+      padding:8px;
+      text-align:center;
+      font-size:12px;
+      font-weight:700
+    }
+
+    /* SAFE PRINT */
+    .print-only{display:none}
+    @media print{
+      .print-only{display:block}
+    }
   </style>
 </head>
 <body>
-  <div class="wrap">
-    <header class="header">
-      <h1>Pilote de tableau de bord numérique</h1>
-      <p class="sub">Position, statuts, courses — en temps réel. <span class="brand">DIGIY DRIVER</span> • 0% commission • Paiement direct au pro.</p>
-    </header>
-
-    <section class="grid">
-      <div class="card">
-        <h3 style="margin:0 0 8px;">Inscription chauffeur</h3>
-        <form id="formReg" class="row" autocomplete="on">
-          <input id="regName" placeholder="Nom chauffeur (ex. Mamadou D.)" required />
-          <select id="regType">
-            <option value="Car" selected>Car</option>
-            <option value="Moto">Moto</option>
-            <option value="Van">Van</option>
-          </select>
-          <input id="regWhats" placeholder="WhatsApp (optionnel)" inputmode="tel" />
-          <button type="submit" class="btn">S’inscrire</button>
-        </form>
-
-        <div style="margin-top:10px; display:flex; gap:10px; flex-wrap:wrap">
-          <span class="pill">DriverID: <code id="driverIdView">—</code></span>
-          <span class="pill">Nom: <b id="driverName">—</b></span>
-          <span class="pill">Type: <b id="driverType">—</b></span>
-          <span class="pill">Whats: <b id="driverWhatsapp">—</b></span>
-        </div>
-      </div>
-
-      <div class="card">
-        <h3 style="margin:0 0 8px;">Statuts & GPS</h3>
-        <div class="row" style="margin-bottom:8px">
-          <button id="btnOnline" class="btn-ok">Disponible</button>
-          <button id="btnBusy" class="btn-warn">Occupé</button>
-          <button id="btnOffline" class="btn-danger">Hors-ligne</button>
-          <button id="btnShare" class="btn">Partager ma position</button>
-          <button id="btnStop" class="btn">Stop GPS</button>
-        </div>
-        <div>Statut: <b id="status">offline</b></div>
-        <div>Dernier GPS: <span id="lastGps" class="muted">—</span></div>
-      </div>
-    </section>
-
-    <section class="card" style="margin-top:12px">
-      <h3 style="margin:0 0 8px;">Statistiques</h3>
-      <div class="row">
-        <span class="pill">Courses: <b id="statRides">0</b></span>
-        <span class="pill">Km: <b id="statKm">0</b></span>
-        <span class="pill">Note: <b id="statRating">—</b></span>
-      </div>
-    </section>
-
-    <p class="footer">∞ DIGIYLYFE — “0% commission, tout pour le pro.”</p>
+<div class="app">
+  <div id="offlineBanner" style="display:none" class="offline-banner">
+    ⚠️ Mode hors ligne — Les modifications seront synchronisées dès le retour de la connexion
   </div>
+  <header>
+    <div class="hwrap">
+      <div class="brand" id="btnHome">
+        <div class="logo"></div>
+        <div>
+          <h1>RESTO PRO</h1>
+          <div class="subtitle">Plan de salle • Commandes • KDS • Réservations • Admin</div>
+        </div>
+      </div>
+      <div class="actions">
+        <button class="btn ghost" id="btnHome2">🏠 Plan</button>
+        <button class="btn info" id="btnKds">🔥 KDS</button>
+        <button class="btn warn" id="btnRes">📅 Réservations</button>
+        <button class="btn gold" id="btnAdmin">⚙️ Admin</button>
+      </div>
+    </div>
+  </header>
+  <main><div id="view"></div></main>
+  <div class="footer">Gestion professionnelle de restaurant — Mode 100% local</div>
+</div>
 
-  <script>
-    const API = 'https://digiy-driver-api-1.onrender.com';
-    const LS = {
-      get id(){ return localStorage.getItem('driverId') || ''; },
-      set id(v){ localStorage.setItem('driverId', v); }
+<script>
+/* ===== Utils ===== */
+const FCFA = v => new Intl.NumberFormat('fr-FR',{
+  style:'currency',
+  currency:'XOF',
+  minimumFractionDigits:0
+}).format(Math.round(v||0));
+
+const todayKey = () => new Date().toISOString().slice(0,10);
+const isMobile = () => window.innerWidth < 640;
+
+/* ===== Defaults ===== */
+const DEFAULT_ZONES = {
+  SALLE_RDC:  { name:'🏠 Salle RDC', tables:12, startNumber:1,   class:'salle' },
+  ETAGE:      { name:'🏢 Étage',      tables:10, startNumber:100, class:'etage' },
+  TERRASSE_1: { name:'☀️ Terrasse 1', tables:12, startNumber:200, class:'terr1' },
+  TERRASSE_2: { name:'☀️ Terrasse 2', tables:12, startNumber:300, class:'terr2' }
+};
+const DEFAULT_PRODUCTS = [
+  {id:'1',name:'Café',poste:'BAR',price:1500,tax:0.1},
+  {id:'2',name:'Coca',poste:'BAR',price:1500,tax:0.1},
+  {id:'8',name:'Salade César',poste:'FROID',price:3500,tax:0.1,isEntree:true},
+  {id:'11',name:'Tiramisu',poste:'FROID',price:2500,tax:0.1,isDessert:true},
+  {id:'14',name:'Steak Frites',poste:'CHAUD',price:6500,tax:0.1,isPlat:true},
+  {id:'16',name:'Pizza',poste:'CHAUD',price:5000,tax:0.1,isPlat:true},
+  {id:'17',name:'Yassa Poulet',poste:'CHAUD',price:5500,tax:0.1,isPlat:true},
+  {id:'18',name:'Thiéboudienne',poste:'CHAUD',price:6000,tax:0.1,isPlat:true},
+];
+const DEFAULT_MENUS = [
+  {id:'M1',name:'Midi Express',prix:8000},
+  {id:'M2',name:'Complet Soir',prix:12000}
+];
+
+/* ===== Supabase Config ===== */
+const SUPABASE_URL = "https://wesqmwjjtsefyjnluosj.supabase.co";
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Indlc3Ftd2pqdHNlZnlqbmx1b3NqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjUxNzg4ODIsImV4cCI6MjA4MDc1NDg4Mn0.dZfYOc2iL2_wRYL3zExZFsFSBK6AbMeOid2LrIjcTdA";
+
+const supa = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+/* ===== State ===== */
+const state = {
+  zones: JSON.parse(localStorage.getItem('zones')||'null') || DEFAULT_ZONES,
+  tables: [],
+  products: JSON.parse(localStorage.getItem('products')||'null') || DEFAULT_PRODUCTS,
+  menus: JSON.parse(localStorage.getItem('menus')||'null') || DEFAULT_MENUS,
+  reservations: [],
+  view: 'tables',
+  cart: [],
+  selectedTableId: null,
+  kdsFilter: 'ALL',
+  activeZoneKey: 'SALLE_RDC',
+  gridPage: 0,
+  company: JSON.parse(localStorage.getItem('company')||'null') || {
+    name:'Mon Resto', addr:'Adresse', city:'Ville', country:'SN',
+    taxId:'NINEA/RCCM ou SIRET/TVA', register:'', cashier:'Caisse 1', operator:'Opérateur'
+  },
+  isOnline: navigator.onLine
+};
+
+function saveLS(){
+  localStorage.setItem('zones', JSON.stringify(state.zones));
+  localStorage.setItem('products', JSON.stringify(state.products));
+  localStorage.setItem('menus', JSON.stringify(state.menus));
+  localStorage.setItem('company', JSON.stringify(state.company));
+}
+
+/* ===== Network Status ===== */
+window.addEventListener('online', () => {
+  state.isOnline = true;
+  document.getElementById('offlineBanner').style.display = 'none';
+  console.log('✅ Connexion rétablie');
+  loadReservationsFromSupabase(); // Sync
+});
+
+window.addEventListener('offline', () => {
+  state.isOnline = false;
+  document.getElementById('offlineBanner').style.display = 'block';
+  console.log('⚠️ Mode hors ligne');
+});
+
+/* ===== Supabase : Réservations avec fallback offline ===== */
+
+async function loadReservationsFromSupabase(){
+  try{
+    if(!navigator.onLine){
+      console.warn('[OFFLINE] Chargement depuis cache localStorage');
+      state.reservations = JSON.parse(localStorage.getItem('reservations_cache') || '[]');
+      return;
+    }
+
+    const { data, error } = await supa
+      .from('reservations')
+      .select('*')
+      .order('date', { ascending: true })
+      .order('time', { ascending: true });
+
+    if(error){
+      console.error('Erreur SELECT reservations', error);
+      // Fallback sur cache local
+      state.reservations = JSON.parse(localStorage.getItem('reservations_cache') || '[]');
+      return;
+    }
+
+    state.reservations = (data || []).map(row => ({
+      id: row.id,
+      name: row.name || 'Client',
+      guests: row.guests ?? null,
+      date: row.date || '',
+      time: row.time ? row.time.toString().slice(0,5) : '',
+      phone: row.phone || ''
+    }));
+
+    // Sauvegarder en cache local
+    localStorage.setItem('reservations_cache', JSON.stringify(state.reservations));
+
+  } catch(err){
+    console.error('Erreur loadReservationsFromSupabase', err);
+    state.reservations = JSON.parse(localStorage.getItem('reservations_cache') || '[]');
+  }
+}
+
+async function addReservationToSupabase({ name, guests, date, time, phone }){
+  try{
+    if(!navigator.onLine){
+      alert("⚠️ Pas de connexion Internet. La réservation sera ajoutée une fois en ligne.");
+      return null;
+    }
+
+    const { data, error } = await supa
+      .from('reservations')
+      .insert([{
+        name,
+        guests,
+        date,
+        time,
+        phone
+      }])
+      .select()
+      .single();
+
+    if(error){
+      console.error('Erreur INSERT reservation', error);
+      alert("Erreur lors de l'enregistrement : " + error.message);
+      return null;
+    }
+
+    return {
+      id: data.id,
+      name: data.name || 'Client',
+      guests: data.guests ?? null,
+      date: data.date || '',
+      time: data.time ? data.time.toString().slice(0,5) : '',
+      phone: data.phone || ''
     };
-    const $ = s => document.querySelector(s);
-    function toast(msg){ try{ console.log('ℹ️', msg); }catch(e){} }
+  } catch(err){
+    console.error('Erreur addReservationToSupabase', err);
+    alert("Erreur inattendue lors de l'ajout.");
+    return null;
+  }
+}
 
-    async function api(path, opts={}){
-      const res = await fetch(API + path, {
-        headers: { 'Content-Type':'application/json' },
-        ...opts
+async function updateReservationInSupabase(id, { name, guests, date, time, phone }){
+  try{
+    if(!navigator.onLine){
+      alert("⚠️ Pas de connexion Internet. Impossible de modifier pour le moment.");
+      return false;
+    }
+
+    const { error } = await supa
+      .from('reservations')
+      .update({ name, guests, date, time, phone })
+      .eq('id', id);
+
+    if(error){
+      console.error('Erreur UPDATE reservation', error);
+      alert("Erreur lors de la modification : " + error.message);
+      return false;
+    }
+
+    return true;
+  } catch(err){
+    console.error('Erreur updateReservationInSupabase', err);
+    alert("Erreur inattendue lors de la modification.");
+    return false;
+  }
+}
+
+async function deleteReservationFromSupabase(id){
+  try{
+    if(!navigator.onLine){
+      alert("⚠️ Pas de connexion Internet. Impossible de supprimer pour le moment.");
+      return false;
+    }
+
+    const { error } = await supa
+      .from('reservations')
+      .delete()
+      .eq('id', id);
+
+    if(error){
+      console.error('Erreur DELETE reservation', error);
+      alert("Impossible de supprimer cette réservation : " + error.message);
+      return false;
+    }
+    return true;
+  } catch(err){
+    console.error('Erreur deleteReservationFromSupabase', err);
+    alert("Erreur inattendue lors de la suppression.");
+    return false;
+  }
+}
+
+/* ===== Helpers tables ===== */
+function generateTables(zones){
+  const out=[]; let gid=1;
+  Object.entries(zones).forEach(([k,z])=>{
+    for(let i=0;i<z.tables;i++){
+      out.push({
+        id:gid++,
+        number:z.startNumber+i,
+        zone:k,
+        zoneName:z.name,
+        status:'libre',
+        orders:[]
       });
-      if(!res.ok){
-        const t = await res.text().catch(()=>'');
-        throw new Error(t || ('HTTP ' + res.status));
-      }
-      return res.json();
     }
+  });
+  return out;
+}
+state.tables = generateTables(state.zones);
 
-    async function registerDriver({name, type='Car', whatsapp=''}) {
-      const r = await api('/api/driver/register', {
-        method:'POST',
-        body: JSON.stringify({ name, type, whatsapp })
+/* ===== SAFE PRINT POPUP 58mm ===== */
+function printTicket58({table, items, totalHT, totalTTC, method, received}){
+  try{
+    const w = window.open('', 'ticket58', 'width=420,height=800');
+    const c = state.company || {};
+    const now = new Date();
+    const date = now.toLocaleDateString('fr-FR');
+    const time = now.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'});
+    const lines = items.map(i => {
+      const ttc = Math.round(i.price*(1+(i.tax||0))*i.qty);
+      const label = i.isMenu ? '🍽️' : '';
+      return `<tr><td>${i.qty}× ${label}${i.name}</td><td style="text-align:right">${ttc.toLocaleString('fr-FR')}</td></tr>`;
+    }).join('');
+
+    const html = `<!DOCTYPE html><html><head><meta charset="utf-8">
+    <title>Ticket 58mm</title>
+    <style>
+      @page { size: 58mm auto; margin: 0; }
+      body{ font-family: ui-monospace, Menlo, monospace; font-size: 12px; margin:0; padding:6px; }
+      .c{text-align:center} .lh{line-height:1.25} hr{border:0;border-top:1px dashed #000;margin:6px 0}
+      table{width:100%; border-collapse:collapse} td{padding:2px 0; vertical-align:top}
+      .tot td{font-weight:bold}
+    </style></head>
+    <body class="lh" onload="window.print(); setTimeout(()=>window.close(), 300);">
+      <div class="c"><strong>${c.name||''}</strong><br>${c.addr||''}<br>${c.city||''}</div>
+      <div class="c">${c.country==='FR' ? (c.taxId||'SIRET/TVA') : (c.taxId||'NINEA/RCCM')}</div>
+      <hr>
+      <div>Ticket: ${date} ${time} — Table ${table.number}</div>
+      <table>${lines}</table>
+      <hr>
+      <table>
+        <tr><td>Total HT</td><td style="text-align:right">${Math.round(totalHT).toLocaleString('fr-FR')}</td></tr>
+        <tr class="tot"><td>Total TTC</td><td style="text-align:right">${Math.round(totalTTC).toLocaleString('fr-FR')}</td></tr>
+        <tr><td>Règlement</td><td style="text-align:right">${method.toUpperCase()}</td></tr>
+        <tr><td>Reçu</td><td style="text-align:right">${Math.round(received||totalTTC).toLocaleString('fr-FR')}</td></tr>
+        <tr><td>Rendu</td><td style="text-align:right">${Math.max(0, Math.round((received||totalTTC)-totalTTC)).toLocaleString('fr-FR')}</td></tr>
+      </table>
+      <hr>
+      <div class="c">Merci de votre visite !</div>
+    </body></html>`;
+
+    w.document.open();
+    w.document.write(html);
+    w.document.close();
+  }catch(e){
+    console.error('Print error', e);
+  }
+}
+window.onafterprint = () => {
+  try{ if(state.view==='tables'){ renderTables(); } }catch(e){}
+};
+
+/* ====== Plan de salle ====== */
+function renderTables(){
+  state.view='tables';
+  const root=document.getElementById('view'); 
+  root.innerHTML='';
+  const zonesWrap=document.createElement('div'); 
+  zonesWrap.className='zones';
+
+  const zoneKeys = Object.keys(state.zones);
+
+  if(isMobile()){
+    const tabs=document.createElement('div'); 
+    tabs.className='zoneTabs';
+    zoneKeys.forEach(k=>{
+      const b=document.createElement('button'); 
+      b.className='tab'+(state.activeZoneKey===k?' active':''); 
+      b.textContent=state.zones[k].name;
+      b.onclick=()=>{ state.activeZoneKey=k; state.gridPage=0; renderTables(); };
+      tabs.appendChild(b);
+    });
+    zonesWrap.appendChild(tabs);
+
+    const zk = state.activeZoneKey;
+    const zdata = state.zones[zk];
+    const section=document.createElement('section'); 
+    section.className='zone';
+    section.innerHTML=
+      '<h2>'+zdata.name+' ('+zdata.tables+' tables)</h2>'+
+      '<div class="grid"></div>'+
+      '<div class="pager">'+
+        '<button class="btn" id="prev">◀</button>'+
+        '<div class="dots" id="dots"></div>'+
+        '<button class="btn" id="next">▶</button>'+
+      '</div>';
+    const grid=section.querySelector('.grid');
+
+    const pageSize = 6;
+    const allTables = state.tables.filter(t=>t.zone===zk);
+    const totalPages = Math.max(1, Math.ceil(allTables.length / pageSize));
+    if(state.gridPage >= totalPages) state.gridPage = totalPages-1;
+    const start = state.gridPage * pageSize;
+    const pageTables = allTables.slice(start, start + pageSize);
+
+    pageTables.forEach(t=>{
+      const totalTTC = t.orders.reduce((sum,o)=>sum+o.items.reduce((s,i)=>s+i.price*(1+(i.tax||0))*i.qty,0),0);
+      const btn=document.createElement('button');
+      btn.className='tile '+(state.zones[zk].class||'');
+      const barClass = t.status==='occupée'?'occ': t.status==='prête'?'ready': t.status==='addition'?'add':'';
+      btn.innerHTML=
+        '<div class="bar '+barClass+'"></div>'+
+        '<div class="num">'+t.number+'</div>'+
+        '<div class="zoneName">'+t.zoneName+'</div>'+
+        '<div class="line"></div>'+
+        (t.status!=='libre'
+          ? '<div class="total">'+FCFA(totalTTC)+'</div>'
+          : '<div class="muted">Libre</div>');
+      btn.onclick=()=>onTableClick(t.id);
+      grid.appendChild(btn);
+    });
+
+    const dots=section.querySelector('#dots');
+    for(let i=0;i<totalPages;i++){
+      const d=document.createElement('div'); 
+      d.className='dot'+(i===state.gridPage?' on':''); 
+      d.onclick=()=>{ state.gridPage=i; renderTables(); }; 
+      dots.appendChild(d);
+    }
+    section.querySelector('#prev').onclick=()=>{ state.gridPage = (state.gridPage-1+totalPages)%totalPages; renderTables(); };
+    section.querySelector('#next').onclick=()=>{ state.gridPage = (state.gridPage+1)%totalPages; renderTables(); };
+
+    zonesWrap.appendChild(section);
+  } else {
+    zoneKeys.forEach(zk=>{
+      const zdata=state.zones[zk];
+      const sec=document.createElement('section'); 
+      sec.className='zone';
+      sec.innerHTML='<h2>'+zdata.name+' ('+zdata.tables+' tables)</h2><div class="grid"></div>';
+      const grid=sec.querySelector('.grid');
+      state.tables.filter(t=>t.zone===zk).forEach(t=>{
+        const totalTTC = t.orders.reduce((sum,o)=>sum+o.items.reduce((s,i)=>s+i.price*(1+(i.tax||0))*i.qty,0),0);
+        const btn=document.createElement('button');
+        btn.className='tile '+(state.zones[zk].class||'');
+        const barClass = t.status==='occupée'?'occ': t.status==='prête'?'ready': t.status==='addition'?'add':'';
+        btn.innerHTML=
+          '<div class="bar '+barClass+'"></div>'+
+          '<div class="num">'+t.number+'</div>'+
+          '<div class="zoneName">'+t.zoneName+'</div>'+
+          '<div class="line"></div>'+
+          (t.status!=='libre'
+            ? '<div class="total">'+FCFA(totalTTC)+'</div>'
+            : '<div class="muted">Libre</div>');
+        btn.onclick=()=>onTableClick(t.id);
+        grid.appendChild(btn);
       });
-      LS.id = r.driverId;
-      $('#driverIdView').textContent = LS.id || '—';
-      toast('Inscription ok: ' + LS.id);
-      await Promise.all([loadProfile(), loadStats()]);
-    }
+      zonesWrap.appendChild(sec);
+    });
+  }
 
-    async function loadProfile(){
-      if(!LS.id) return;
-      const p = await api('/api/driver/' + encodeURIComponent(LS.id));
-      $('#driverName').textContent = p.name || '—';
-      $('#driverType').textContent = p.type || '—';
-      $('#driverWhatsapp').textContent = p.whatsapp || '—';
-    }
+  root.appendChild(zonesWrap);
+}
 
-    async function loadStats(){
-      if(!LS.id) return;
-      const s = await api('/api/driver/' + encodeURIComponent(LS.id) + '/stats');
-      $('#statRides').textContent = s.totalRides ?? 0;
-      $('#statKm').textContent = s.totalKm ?? 0;
-      $('#statRating').textContent = s.rating ?? '—';
-    }
+/* ====== Interface Commande ====== */
+function showOrder(table){
+  const overlay=document.createElement('div'); 
+  overlay.className='overlay';
+  const card=document.createElement('div'); 
+  card.className='card';
+  card.innerHTML = 
+    '<div class="row">'+
+      '<div class="col">'+
+        '<h2>Commande T.'+table.number+' <span class="muted">('+table.zoneName+')</span></h2>'+
+        '<div class="muted">Astuce: <span class="kbd">+</span>/<span class="kbd">−</span>, <span class="kbd">Entrée</span> pour envoyer.</div>'+
+      '</div>'+
+      '<div><button class="btn" id="close">↩︎ Retour</button></div>'+
+    '</div>';
+  const row=document.createElement('div'); 
+  row.className='row'; 
+  card.appendChild(row);
 
-    async function setStatus(state){
-      if(!LS.id) return toast('Inscris-toi d’abord');
-      await api('/api/driver/status', {
-        method:'POST',
-        body: JSON.stringify({ driverId: LS.id, status: state })
-      });
-      $('#status').textContent = state;
-      toast('Statut → ' + state);
-    }
+  const left=document.createElement('div'); 
+  left.className='col';
+  left.innerHTML=
+    '<h3>Panier</h3>'+
+    '<div class="list" id="cartList"></div>'+
+    '<div class="group" style="margin-top:10px">'+
+      '<button class="btn ok" id="send" disabled>📤 Envoyer commande</button>'+
+      '<button class="btn info" id="add" disabled>🖨️ Imprimer addition</button>'+
+    '</div>';
 
-    let watchId = null;
-    let lastSentAt = 0;
-    const SEND_EVERY_MS = 30000;
+  const right=document.createElement('div'); 
+  right.className='col';
+  right.innerHTML=
+    '<h3>Produits</h3>'+
+    '<div class="list" id="prodList"></div>';
 
-    async function sendLocation(pos){
-      if(!LS.id) return;
-      const now = Date.now();
-      if(now - lastSentAt < SEND_EVERY_MS) return;
-      lastSentAt = now;
+  row.appendChild(left); 
+  row.appendChild(right);
+  overlay.appendChild(card); 
+  document.body.appendChild(overlay);
 
-      const { latitude:lat, longitude:lng, accuracy, heading, speed } = pos.coords;
-      await api('/api/driver/location', {
-        method:'POST',
-        body: JSON.stringify({
-          driverId: LS.id,
-          lat, lng, accuracy, heading, speed,
-          timestamp: new Date().toISOString()
-        })
-      });
-      $('#lastGps').textContent = (lat?.toFixed ? lat.toFixed(5) : lat) + ', ' + (lng?.toFixed ? lng.toFixed(5) : lng) + ' • ' + new Date().toLocaleTimeString();
-      toast('GPS envoyé');
-    }
+  card.querySelector('#close').onclick=()=>document.body.removeChild(overlay);
 
-    function startSharing(){
-      if(!navigator.geolocation) return alert('Géoloc non supportée');
-      if(watchId) return;
-      watchId = navigator.geolocation.watchPosition(
-        sendLocation,
-        (e)=>alert('Autorise la géoloc (HTTPS) • ' + e.message),
-        { enableHighAccuracy:true, maximumAge:5000, timeout:10000 }
-      );
-      toast('Partage GPS ON');
-    }
-    function stopSharing(){
-      if(watchId) navigator.geolocation.clearWatch(watchId);
-      watchId = null;
-      toast('Partage GPS OFF');
-    }
+  const prodList = card.querySelector('#prodList');
 
-    window.addEventListener('DOMContentLoaded', async ()=>{
-      $('#btnOnline').onclick = ()=>setStatus('online');
-      $('#btnBusy').onclick = ()=>setStatus('busy');
-      $('#btnOffline').onclick = ()=>setStatus('offline');
-      $('#btnShare').onclick = startSharing;
-      $('#btnStop').onclick = stopSharing;
+  // Section MENUS en premier
+  if(state.menus && state.menus.length > 0){
+    const h=document.createElement('div'); 
+    h.innerHTML='<h4>🍽️ MENUS</h4>'; 
+    h.style.marginTop='0'; 
+    h.style.color='#1a1c1f';
+    h.style.fontWeight='900';
+    prodList.appendChild(h);
 
-      if(LS.id){
-        $('#driverIdView').textContent = LS.id;
-        await Promise.all([loadProfile(), loadStats()]);
-      }
+    state.menus.forEach(m=>{
+      const line=document.createElement('div');
+      line.style.cssText='display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px dashed #eadfca;background:#fff7e6';
+      line.innerHTML=
+        '<div><strong>'+m.name+
+        '</strong><span class="pill" style="background:#ffd166;color:#7a4700">MENU</span></div>'+
+        '<div><strong>'+FCFA(m.prix)+'</strong></div>'+
+        '<div><button class="btn gold">+ Ajouter</button></div>';
+      line.querySelector('button').onclick=()=>{
+        const ex = state.cart.find(i=>i.id===m.id);
+        if(ex) ex.qty++; 
+        else state.cart.push({id:m.id,name:m.name,price:m.prix,tax:0,qty:1,poste:'MENU',isMenu:true});
+        paintCart();
+      };
+      prodList.appendChild(line);
+    });
+  }
 
-      $('#formReg').onsubmit = async (e)=>{
-        e.preventDefault();
-        const name = $('#regName').value.trim();
-        const type = $('#regType').value.trim();
-        const whatsapp = $('#regWhats').value.trim();
-        if(!name) return alert('Nom requis');
-        try{
-          await registerDriver({ name, type, whatsapp });
-        }catch(err){
-          alert('Erreur inscription: ' + err.message);
+  // Sections produits (BAR, FROID, CHAUD)
+  ['BAR','FROID','CHAUD'].forEach(poste=>{
+    const h=document.createElement('div'); 
+    h.innerHTML='<h4>'+poste+'</h4>'; 
+    h.style.marginTop='10px'; 
+    h.style.color='#1a1c1f'; 
+    prodList.appendChild(h);
+
+    state.products.filter(p=>p.poste===poste).forEach(p=>{
+      const line=document.createElement('div');
+      line.style.cssText='display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px dashed #eadfca';
+      line.innerHTML=
+        '<div><strong>'+p.name+
+        '</strong><span class="pill">'+poste+'</span></div>'+
+        '<div>'+FCFA(p.price*(1+(p.tax||0)))+'</div>'+
+        '<div><button class="btn">+ Ajouter</button></div>';
+      line.querySelector('button').onclick=()=>{
+        const ex = state.cart.find(i=>i.id===p.id);
+        if(ex) ex.qty++; 
+        else state.cart.push({id:p.id,name:p.name,price:p.price,tax:p.tax||0,qty:1,poste:poste});
+        paintCart();
+      };
+      prodList.appendChild(line);
+    });
+  });
+
+  function paintCart(){
+    const list=card.querySelector('#cartList'); 
+    list.innerHTML='';
+    let total=0;
+    state.cart.forEach(it=>{
+      const li=document.createElement('div');
+      li.style.cssText='display:flex;gap:10px;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px dashed #eadfca';
+      const line = Math.round(it.price*(1+it.tax)*it.qty); 
+      total+=line;
+      li.innerHTML=
+        '<div><strong>'+it.name+'</strong><span class="pill">'+(it.poste||'-')+'</span></div>'+
+        '<div style="display:flex;gap:6px;align-items:center">'+
+          '<button class="btn" data-act="minus" data-id="'+it.id+'">−</button>'+
+          '<strong>'+it.qty+'</strong>'+
+          '<button class="btn" data-act="plus" data-id="'+it.id+'">+</button>'+
+        '</div>'+
+        '<div><strong>'+FCFA(line)+'</strong></div>';
+      list.appendChild(li);
+    });
+    const foot=document.createElement('div'); 
+    foot.style.cssText='display:flex;justify-content:space-between;align-items:center;padding-top:8px';
+    foot.innerHTML='<div><strong>Total TTC</strong></div><div><strong>'+FCFA(total)+'</strong></div>'; 
+    list.appendChild(foot);
+
+    card.querySelector('#send').disabled = state.cart.length===0;
+    card.querySelector('#add').disabled = state.cart.length===0;
+
+    list.querySelectorAll('button[data-act]').forEach(b=>{
+      b.onclick=()=>{
+        const id=b.getAttribute('data-id'); 
+        const act=b.getAttribute('data-act');
+        const ex=state.cart.find(i=>i.id===id); 
+        if(!ex) return;
+        if(act==='plus') ex.qty++; 
+        else {
+          ex.qty--; 
+          if(ex.qty<=0) state.cart = state.cart.filter(i=>i.id!==id);
         }
+        paintCart();
       };
     });
-  </script>
+  }
+  paintCart();
+
+  card.querySelector('#send').onclick=()=>{
+    if(state.cart.length===0) return;
+    const newOrder={
+      id:Date.now(),
+      tableId:table.id,
+      items: state.cart.map(i=>({...i,status:'en_cours'})),
+      sentAt:new Date().toISOString()
+    };
+    table.orders.push(newOrder); 
+    table.status='occupée'; 
+    state.cart=[]; 
+    renderTables(); 
+    document.body.removeChild(overlay);
+    alert('Commande T'+table.number+' envoyée !');
+  };
+
+  card.querySelector('#add').onclick=()=>{
+    if(state.cart.length===0) return;
+    table.status='addition'; 
+    renderTables(); 
+    document.body.removeChild(overlay);
+    alert('Addition T'+table.number+' imprimée.');
+  };
+
+  overlay.onkeydown=(e)=>{ 
+    if(e.key==='Enter' && !card.querySelector('#send').disabled){
+      card.querySelector('#send').click(); 
+    } 
+  };
+  overlay.tabIndex=0; 
+  overlay.focus();
+}
+
+function onTableClick(id){
+  const table = state.tables.find(t=>t.id===id);
+  const hasItems = table.orders.some(o=>o.items && o.items.length);
+  if(hasItems){
+    const overlay=document.createElement('div'); 
+    overlay.className='overlay';
+    const card=document.createElement('div'); 
+    card.className='card';
+    const items=table.orders.flatMap(o=>o.items);
+    const totalHT = items.reduce((s,i)=>s+i.price*i.qty,0);
+    const totalTTC = items.reduce((s,i)=>s+i.price*(1+(i.tax||0))*i.qty,0);
+    card.innerHTML=
+      '<div class="row">'+
+        '<div class="col"><h2>Encaissement — Table '+table.number+'</h2></div>'+
+        '<div><button class="btn" id="x">↩︎ Retour</button></div>'+
+      '</div>'+
+      '<div class="list" style="margin:8px 0;max-height:260px;overflow:auto"></div>'+
+      '<div class="group" style="margin-top:4px">'+
+        '<div>HT: <strong>'+FCFA(totalHT)+'</strong></div>'+
+        '<div>TTC: <strong>'+FCFA(totalTTC)+'</strong></div>'+
+      '</div>'+
+      '<div class="group" style="margin-top:8px">'+
+        '<select id="mth">'+
+          '<option value="cash">Espèces</option>'+
+          '<option value="card">Carte</option>'+
+          '<option value="wave">Wave</option>'+
+          '<option value="om">Orange Money</option>'+
+        '</select>'+
+        '<input id="rcv" type="number" min="0" value="'+Math.round(totalTTC)+'">'+
+      '</div>'+
+      '<div class="group" style="margin-top:10px">'+
+        '<button class="btn ok" id="ok">✅ Encaisser & Ticket 58mm</button>'+
+        '<button class="btn" id="cancel">Annuler</button>'+
+      '</div>';
+    overlay.appendChild(card); 
+    document.body.appendChild(overlay);
+
+    card.querySelector('#x').onclick=()=>document.body.removeChild(overlay);
+    card.querySelector('#cancel').onclick=()=>document.body.removeChild(overlay);
+
+    const lst=card.querySelector('.list');
+    items.forEach(it=>{
+      const d=document.createElement('div');
+      d.style.cssText='display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px dashed #eadfca';
+      d.innerHTML=
+        '<div>'+it.qty+' × '+it.name+' <span class="pill">'+(it.poste||'-')+'</span></div>'+
+        '<div>'+FCFA(it.price*(1+(it.tax||0))*it.qty)+'</div>';
+      lst.appendChild(d);
+    });
+
+    card.querySelector('#ok').onclick=()=>{
+      const method = card.querySelector('#mth').value;
+      const received = Number(card.querySelector('#rcv').value||totalTTC);
+      printTicket58({ table, items, totalHT, totalTTC, method, received });
+      table.status='libre'; 
+      table.orders=[]; 
+      renderTables(); 
+      document.body.removeChild(overlay);
+      alert('Paiement enregistré ('+FCFA(totalTTC)+') — Table libérée.');
+    };
+  } else {
+    showOrder(table);
+  }
+}
+
+/* ====== Réservations ====== */
+function renderReservations(){
+  state.view='resa';
+  const root = document.getElementById('view');
+  root.innerHTML = '';
+
+  const wrap = document.createElement('div');
+  wrap.innerHTML =
+    '<div class="row" style="justify-content:space-between;align-items:center">'+
+      '<h2>📅 Réservations</h2>'+
+      '<button class="btn ghost" id="back">↩︎ Retour plan</button>'+
+    '</div>'+
+    '<div class="row" style="margin-top:8px">'+
+      '<div class="col">'+
+        '<div class="card">'+
+          '<h3>Nouvelle réservation</h3>'+
+          '<div class="group" style="margin-top:8px">'+
+            '<input id="rname" placeholder="Nom client">'+
+            '<input id="rguests" type="number" min="1" value="2" placeholder="Couverts">'+
+          '</div>'+
+          '<div class="group" style="margin-top:8px">'+
+            '<input id="rdate" type="date" value="'+ todayKey() +'">'+
+            '<input id="rtime" type="time" value="20:00">'+
+          '</div>'+
+          '<div class="group" style="margin-top:8px">'+
+            '<input id="rphone" placeholder="Téléphone">'+
+            '<button class="btn ok" id="rsave">+ Ajouter</button>'+
+          '</div>'+
+          '<div class="muted" style="margin-top:8px">'+
+            'Réservations sauvegardées dans Supabase (table <strong>reservations</strong>).'+
+          '</div>'+
+        '</div>'+
+      '</div>'+
+      '<div class="col">'+
+        '<div class="card">'+
+          '<h3>Liste</h3>'+
+          '<div class="list" id="rlist">Chargement…</div>'+
+        '</div>'+
+      '</div>'+
+    '</div>';
+
+  root.appendChild(wrap);
+
+  const backBtn  = wrap.querySelector('#back');
+  const listEl   = wrap.querySelector('#rlist');
+  const saveBtn  = wrap.querySelector('#rsave');
+
+  backBtn.onclick = renderTables;
+
+  function paintReservations(){
+    listEl.innerHTML = '';
+
+    const rows = (state.reservations || []).slice()
+      .sort((a,b) => (a.date + (a.time || '')) .localeCompare(b.date + (b.time || '')));
+
+    if(rows.length === 0){
+      listEl.innerHTML = '<div class="muted">Aucune réservation pour le moment.</div>';
+      return;
+    }
+
+    rows.forEach(r => {
+      const d = document.createElement('div');
+      d.style.cssText =
+        'display:flex;justify-content:space-between;align-items:center;'+
+        'border-bottom:1px dashed #eadfca;padding:8px 0';
+
+      const infos =
+        '<div>'+
+          '<strong>' + (r.name || 'Client') + '</strong> — '+
+          (r.guests ? r.guests + ' pers' : '')+
+          '<br>'+
+          '<span class="muted">'+
+            (r.date || '') + ' ' + (r.time || '')+
+            (r.phone ? ' • ' + r.phone : '')+
+          '</span>'+
+        '</div>';
+
+      const btns =
+        '<div style="display:flex;gap:4px">'+
+          '<button class="btn" data-action="edit" data-id="'+ r.id +'">✏️</button>'+
+          '<button class="btn" data-action="delete" data-id="'+ r.id +'">🗑️</button>'+
+        '</div>';
+
+      d.innerHTML = infos + btns;
+      listEl.appendChild(d);
+    });
+
+    listEl.querySelectorAll('button[data-action]').forEach(b => {
+      const action = b.getAttribute('data-action');
+      const id = b.getAttribute('data-id');
+      
+      if(action === 'delete'){
+        b.onclick = async () => {
+          if(!confirm("Supprimer cette réservation ?")) return;
+          const ok = await deleteReservationFromSupabase(id);
+          if(ok){
+            await loadReservationsFromSupabase();
+            paintReservations();
+          }
+        };
+      }
+      
+      if(action === 'edit'){
+        b.onclick = async () => {
+          const resa = state.reservations.find(r => r.id === id);
+          if(!resa) return;
+          
+          const newName = prompt("Nom du client :", resa.name);
+          if(!newName) return;
+          
+          const newGuests = prompt("Nombre de couverts :", resa.guests);
+          if(!newGuests) return;
+          
+          const newDate = prompt("Date (YYYY-MM-DD) :", resa.date);
+          if(!newDate) return;
+          
+          const newTime = prompt("Heure (HH:MM) :", resa.time);
+          if(!newTime) return;
+          
+          const newPhone = prompt("Téléphone :", resa.phone || '');
+          
+          const ok = await updateReservationInSupabase(id, {
+            name: newName,
+            guests: parseInt(newGuests),
+            date: newDate,
+            time: newTime,
+            phone: newPhone
+          });
+          
+          if(ok){
+            await loadReservationsFromSupabase();
+            paintReservations();
+          }
+        };
+      }
+    });
+  }
+
+  (async () => {
+    listEl.innerHTML = '<div class="muted">Chargement des réservations…</div>';
+    await loadReservationsFromSupabase();
+    paintReservations();
+  })();
+
+  saveBtn.onclick = async () => {
+    const name   = wrap.querySelector('#rname').value.trim();
+    const guests = parseInt(wrap.querySelector('#rguests').value || '0', 10);
+    const date   = wrap.querySelector('#rdate').value;
+    const time   = wrap.querySelector('#rtime').value;
+    const phone  = wrap.querySelector('#rphone').value.trim();
+
+    if(!name || !guests || !date || !time){
+      alert("Nom, couverts, date et heure sont obligatoires.");
+      return;
+    }
+
+    saveBtn.disabled = true;
+    saveBtn.textContent = "Enregistrement…";
+
+    const inserted = await addReservationToSupabase({ name, guests, date, time, phone });
+
+    saveBtn.disabled = false;
+    saveBtn.textContent = "+ Ajouter";
+
+    if(inserted){
+      await loadReservationsFromSupabase();
+      paintReservations();
+
+      wrap.querySelector('#rname').value = "";
+      wrap.querySelector('#rguests').value = "2";
+      wrap.querySelector('#rphone').value = "";
+    }
+  };
+}
+
+/* ====== Admin ====== */
+function renderAdmin(){
+  state.view='admin';
+  const root=document.getElementById('view'); 
+  root.innerHTML='';
+  const wrap=document.createElement('div');
+  wrap.innerHTML=
+    '<div class="row" style="justify-content:space-between;align-items:center">'+
+      '<h2>⚙️ Administration</h2>'+
+      '<button class="btn ghost" id="back">↩︎ Retour plan</button>'+
+    '</div>'+
+    '<div class="card" style="margin-top:8px">'+
+      '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px">'+
+        '<button class="btn" data-tab="products">Produits & Menus</button>'+
+        '<button class="btn" data-tab="zones">Zones & Tables</button>'+
+        '<button class="btn" data-tab="company">Paramètres Entreprise</button>'+
+      '</div>'+
+      '<div id="tabBody"></div>'+
+    '</div>';
+  root.appendChild(wrap);
+  wrap.querySelector('#back').onclick=renderTables;
+  const tabBody=wrap.querySelector('#tabBody');
+
+  function activate(which){
+    wrap.querySelectorAll('[data-tab]').forEach(b=>b.classList.toggle('gold', b.getAttribute('data-tab')===which));
+    if(which==='products') tabProducts();
+    if(which==='zones') tabZones();
+    if(which==='company') tabCompany();
+  }
+  wrap.querySelectorAll('[data-tab]').forEach(b=>b.onclick=()=>activate(b.getAttribute('data-tab')));
+  activate('products');
+
+  function tabProducts(){
+    tabBody.innerHTML=
+      '<div class="row">'+
+        '<div class="col">'+
+          '<h3>Produits</h3>'+
+          '<div class="group">'+
+            '<input id="pname" placeholder="Nom">'+
+            '<select id="pposte"><option>BAR</option><option>FROID</option><option>CHAUD</option></select>'+
+          '</div>'+
+          '<div class="group" style="margin-top:8px">'+
+            '<input id="pprice" type="number" placeholder="Prix HT">'+
+            '<input id="ptax" type="number" step="0.01" value="0.10" placeholder="Taxe">'+
+          '</div>'+
+          '<div class="group" style="margin-top:8px">'+
+            '<button class="btn ok" id="padd">+ Ajouter</button>'+
+            '<button class="btn" id="preset">Réinitialiser</button>'+
+          '</div>'+
+        '</div>'+
+        '<div class="col">'+
+          '<h3>Liste</h3>'+
+          '<div class="table-wrap">'+
+            '<table><thead><tr><th>Nom</th><th>Poste</th><th>Prix TTC</th><th></th></tr></thead><tbody id="ptbody"></tbody></table>'+
+          '</div>'+
+        '</div>'+
+      '</div>'+
+      '<div class="row" style="margin-top:14px">'+
+        '<div class="col">'+
+          '<h3>Menus</h3>'+
+          '<div class="group">'+
+            '<input id="mname" placeholder="Nom menu">'+
+            '<input id="mprice" type="number" placeholder="Prix">'+
+          '</div>'+
+          '<div class="group" style="margin-top:8px">'+
+            '<button class="btn ok" id="madd">+ Ajouter menu</button>'+
+            '<button class="btn" id="mreset">Réinitialiser</button>'+
+          '</div>'+
+        '</div>'+
+        '<div class="col">'+
+          '<h3>Liste</h3>'+
+          '<div class="table-wrap">'+
+            '<table><thead><tr><th>Nom</th><th>Prix</th><th></th></tr></thead><tbody id="mtbody"></tbody></table>'+
+          '</div>'+
+        '</div>'+
+      '</div>';
+
+    function paint(){
+      const tb=tabBody.querySelector('#ptbody'); 
+      tb.innerHTML='';
+      state.products.forEach(p=>{
+        const tr=document.createElement('tr');
+        tr.innerHTML=
+          '<td>'+p.name+'</td>'+
+          '<td>'+p.poste+'</td>'+
+          '<td>'+FCFA(p.price*(1+(p.tax||0)))+'</td>'+
+          '<td><button class="btn">✕</button></td>';
+        tr.querySelector('button').onclick=()=>{
+          state.products=state.products.filter(x=>x.id!==p.id); 
+          saveLS(); 
+          paint();
+        };
+        tb.appendChild(tr);
+      });
+      const mt=tabBody.querySelector('#mtbody'); 
+      mt.innerHTML='';
+      state.menus.forEach(m=>{
+        const tr=document.createElement('tr');
+        tr.innerHTML=
+          '<td>'+m.name+'</td>'+
+          '<td>'+FCFA(m.prix)+'</td>'+
+          '<td><button class="btn">✕</button></td>';
+        tr.querySelector('button').onclick=()=>{
+          state.menus=state.menus.filter(x=>x.id!==m.id); 
+          saveLS(); 
+          paint();
+        };
+        mt.appendChild(tr);
+      });
+    }
+    paint();
+
+    tabBody.querySelector('#padd').onclick=()=>{
+      const name=tabBody.querySelector('#pname').value.trim();
+      const poste=tabBody.querySelector('#pposte').value;
+      const price=Number(tabBody.querySelector('#pprice').value||0);
+      const tax=Number(tabBody.querySelector('#ptax').value||0);
+      if(!name||!price) return alert('Nom et prix requis.');
+      state.products.push({id:String(Date.now()), name, poste, price, tax}); 
+      saveLS(); 
+      paint();
+    };
+    tabBody.querySelector('#preset').onclick=()=>{
+      state.products = DEFAULT_PRODUCTS.slice(); 
+      saveLS(); 
+      paint();
+    };
+    tabBody.querySelector('#madd').onclick=()=>{
+      const name=tabBody.querySelector('#mname').value.trim();
+      const prix=Number(tabBody.querySelector('#mprice').value||0);
+      if(!name||!prix) return alert('Nom et prix requis.');
+      state.menus.push({id:'M'+Date.now(), name, prix}); 
+      saveLS(); 
+      paint();
+    };
+    tabBody.querySelector('#mreset').onclick=()=>{
+      state.menus = DEFAULT_MENUS.slice(); 
+      saveLS(); 
+      paint();
+    };
+  }
+
+  function tabZones(){
+    tabBody.innerHTML=
+      '<div class="row">'+
+        '<div class="col">'+
+          '<h3>Zones & Tables</h3>'+
+          '<div id="zw"></div>'+
+          '<div class="group" style="margin-top:8px">'+
+            '<button class="btn ok" id="zsave">💾 Sauvegarder</button>'+
+            '<button class="btn" id="zrebuild">🔁 Recréer tables</button>'+
+            '<button class="btn" id="zreset">Défaut</button>'+
+          '</div>'+
+        '</div>'+
+        '<div class="col">'+
+          '<h3>Info</h3>'+
+          '<div class="list">Modifie <span class="kbd">Nom</span>, <span class="kbd">Tables</span>, <span class="kbd">Départ</span>, <span class="kbd">Classe</span> (salle/etage/terr1/terr2). Puis clique <strong>Recréer</strong>.</div>'+
+        '</div>'+
+      '</div>';
+    const zw=tabBody.querySelector('#zw');
+    function paint(){
+      zw.innerHTML='';
+      Object.entries(state.zones).forEach(([k,z])=>{
+        const row=document.createElement('div'); 
+        row.className='row'; 
+        row.style.margin='8px 0';
+        row.innerHTML=
+          '<div class="col"><input data-k="'+k+'" data-f="name" value="'+z.name+'"></div>'+
+          '<div class="col"><input data-k="'+k+'" data-f="tables" type="number" value="'+z.tables+'"></div>'+
+          '<div class="col"><input data-k="'+k+'" data-f="startNumber" type="number" value="'+z.startNumber+'"></div>'+
+          '<div class="col"><input data-k="'+k+'" data-f="class" value="'+(z.class||'')+'" placeholder="salle/etage/terr1/terr2"></div>';
+        zw.appendChild(row);
+      });
+    }
+    paint();
+
+    tabBody.querySelector('#zsave').onclick=()=>{
+      zw.querySelectorAll('input').forEach(i=>{
+        const k=i.getAttribute('data-k'); 
+        const f=i.getAttribute('data-f'); 
+        let v=i.value;
+        if(f==='tables'||f==='startNumber') v=Number(v);
+        state.zones[k][f]=v;
+      });
+      saveLS(); 
+      alert('Zones sauvegardées.');
+    };
+    tabBody.querySelector('#zrebuild').onclick=()=>{
+      state.tables = generateTables(state.zones); 
+      renderTables(); 
+      alert('Tables reconstruites.');
+    };
+    tabBody.querySelector('#zreset').onclick=()=>{
+      state.zones = JSON.parse(JSON.stringify(DEFAULT_ZONES)); 
+      saveLS(); 
+      paint();
+    };
+  }
+
+  function tabCompany(){
+    const c = state.company;
+    tabBody.innerHTML = 
+      '<div class="row">'+
+        '<div class="col">'+
+          '<h3>Paramètres Entreprise</h3>'+
+          '<div class="group">'+
+            '<input id="cname" placeholder="Nom" value="'+(c.name||'')+'">'+
+            '<input id="ccity" placeholder="Ville" value="'+(c.city||'')+'">'+
+          '</div>'+
+          '<div class="group" style="margin-top:8px">'+
+            '<input id="caddr" placeholder="Adresse" value="'+(c.addr||'')+'">'+
+            '<select id="ccountry"><option value="SN">Sénégal</option><option value="FR">France</option></select>'+
+          '</div>'+
+          '<div class="group" style="margin-top:8px">'+
+            '<input id="ctax" placeholder="NINEA/RCCM ou SIRET/TVA" value="'+(c.taxId||'')+'">'+
+            '<input id="creg" placeholder="Registre (optionnel)" value="'+(c.register||'')+'">'+
+          '</div>'+
+          '<div class="group" style="margin-top:8px">'+
+            '<input id="ccash" placeholder="Caisse" value="'+(c.cashier||'')+'">'+
+            '<input id="coper" placeholder="Opérateur" value="'+(c.operator||'')+'">'+
+          '</div>'+
+          '<div style="margin-top:8px"><button class="btn ok" id="csave">💾 Sauvegarder</button></div>'+
+        '</div>'+
+      '</div>';
+    tabBody.querySelector('#ccountry').value = c.country||'SN';
+    tabBody.querySelector('#csave').onclick = () => {
+      state.company = {
+        name: tabBody.querySelector('#cname').value.trim(),
+        addr: tabBody.querySelector('#caddr').value.trim(),
+        city: tabBody.querySelector('#ccity').value.trim(),
+        country: tabBody.querySelector('#ccountry').value,
+        taxId: tabBody.querySelector('#ctax').value.trim(),
+        register: tabBody.querySelector('#creg').value.trim(),
+        cashier: tabBody.querySelector('#ccash').value.trim(),
+        operator: tabBody.querySelector('#coper').value.trim(),
+      };
+      saveLS(); 
+      alert('Paramètres enregistrés.');
+    };
+  }
+}
+
+/* ====== KDS ====== */
+function renderKDS(){
+  state.view='kds';
+  const root=document.getElementById('view'); 
+  root.innerHTML='';
+  const wrap=document.createElement('div');
+  wrap.innerHTML=
+    '<div class="row" style="justify-content:space-between;align-items:center">'+
+      '<h2>🔥 KDS — Suivi des envois</h2>'+
+      '<button class="btn ghost" id="back">↩︎ Retour plan</button>'+
+    '</div>'+
+    '<div class="row" style="margin-top:8px">'+
+      '<div class="col">'+
+        '<div class="card">'+
+          '<div style="display:flex;gap:8px;align-items:center;margin-bottom:8px">'+
+            '<span>Filtre poste:</span>'+
+            '<select id="kfilter"><option value="ALL">Tous</option><option>BAR</option><option>FROID</option><option>CHAUD</option></select>'+
+          '</div>'+
+          '<div id="klist" class="list"></div>'+
+        '</div>'+
+      '</div>'+
+    '</div>';
+  root.appendChild(wrap);
+  wrap.querySelector('#back').onclick=renderTables;
+  const klist=wrap.querySelector('#klist');
+  const kfilter=wrap.querySelector('#kfilter');
+  kfilter.value = state.kdsFilter;
+
+  function paint(){
+    klist.innerHTML='';
+    const orders = state.tables.flatMap(t=>t.orders).filter(o=>o.items.some(i=>i.status==='en_cours'));
+    orders.sort((a,b)=>new Date(a.sentAt)-new Date(b.sentAt));
+    const filt = state.kdsFilter;
+    const filtered = orders
+      .map(o=>({
+        ...o,
+        items:o.items.filter(i=>i.status==='en_cours' && (filt==='ALL' || i.poste===filt))
+      }))
+      .filter(o=>o.items.length>0);
+
+    if(filtered.length===0){
+      klist.innerHTML='<div class="muted">Rien à préparer.</div>';
+      return;
+    }
+
+    filtered.forEach(o=>{
+      const box=document.createElement('div'); 
+      box.className='card'; 
+      box.style.marginBottom='8px';
+      const table = state.tables.find(t=>t.id===o.tableId);
+      box.innerHTML=
+        '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">'+
+          '<div><strong>Table '+(table ? table.number : '?')+'</strong></div>'+
+          '<div class="muted">'+new Date(o.sentAt).toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'})+'</div>'+
+        '</div>';
+      o.items.forEach(it=>{
+        const row=document.createElement('div'); 
+        row.style.cssText='display:flex;justify-content:space-between;border-bottom:1px dashed #eadfca;padding:6px 0';
+        const pillStyle = it.isMenu ? 'background:#ffd166;color:#7a4700' : '';
+        row.innerHTML=
+          '<div>'+it.qty+' × '+it.name+' <span class="pill" style="'+pillStyle+'">'+(it.poste||'-')+'</span></div>'+
+          '<div>'+FCFA(it.price*(1+(it.tax||0))*it.qty)+'</div>';
+        box.appendChild(row);
+      });
+      const actions=document.createElement('div'); 
+      actions.style.cssText='display:flex;gap:8px;margin-top:10px';
+      const ready=document.createElement('button'); 
+      ready.className='btn ok'; 
+      ready.textContent='✅ Table prête';
+      ready.onclick=()=>{
+        const t=state.tables.find(t=>t.id===o.tableId); 
+        if(t){ t.status='prête'; } 
+        renderKDS();
+      };
+      actions.appendChild(ready); 
+      box.appendChild(actions);
+      klist.appendChild(box);
+    });
+  }
+
+  kfilter.onchange=()=>{ 
+    state.kdsFilter=kfilter.value; 
+    paint(); 
+  };
+  paint();
+}
+
+/* ====== Binds & Boot ====== */
+document.getElementById('btnHome').onclick=renderTables;
+document.getElementById('btnHome2').onclick=renderTables;
+document.getElementById('btnAdmin').onclick=renderAdmin;
+document.getElementById('btnRes').onclick=renderReservations;
+document.getElementById('btnKds').onclick=renderKDS;
+window.addEventListener('resize', ()=>{ if(state.view==='tables') renderTables(); });
+
+// Raccourci secours : Shift+R pour revenir au plan des tables
+window.addEventListener('keydown', (e)=>{ 
+  if(e.shiftKey && (e.key==='R' || e.key==='r')){ 
+    try{ renderTables(); }catch(_){} 
+  } 
+});
+
+// Démarrage
+renderTables();
+</script>
+
+<!-- PWA Service Worker Registration -->
+<script>
+if ('serviceWorker' in navigator) {
+  const isProd = window.location.hostname !== 'localhost' 
+    && window.location.hostname !== '127.0.0.1'
+    && !window.location.hostname.includes('claudeusercontent');
+  
+  if (isProd) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('/sw.js')
+        .then((registration) => {
+          console.log('✅ Service Worker enregistré:', registration.scope);
+          
+          registration.addEventListener('updatefound', () => {
+            const newWorker = registration.installing;
+            newWorker.addEventListener('statechange', () => {
+              if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                if (confirm('Nouvelle version disponible ! Voulez-vous mettre à jour ?')) {
+                  newWorker.postMessage({ type: 'SKIP_WAITING' });
+                }
+              }
+            });
+          });
+        })
+        .catch((error) => {
+          console.log('⚠️ Service Worker non disponible (normal en dev):', error.message);
+        });
+    });
+  } else {
+    console.log('ℹ️ Service Worker désactivé en environnement de développement');
+  }
+
+  if (isProd) {
+    let refreshing = false;
+    navigator.serviceWorker.addEventListener('controllerchange', () => {
+      if (!refreshing) {
+        refreshing = true;
+        window.location.reload();
+      }
+    });
+  }
+}
+
+// Prompt d'installation PWA
+let deferredPrompt;
+window.addEventListener('beforeinstallprompt', (e) => {
+  const isProd = window.location.hostname !== 'localhost' 
+    && window.location.hostname !== '127.0.0.1'
+    && !window.location.hostname.includes('claudeusercontent');
+  
+  if (!isProd) return;
+  
+  e.preventDefault();
+  deferredPrompt = e;
+  
+  const installButton = document.createElement('button');
+  installButton.className = 'btn gold';
+  installButton.innerHTML = '📲 Installer l\'application';
+  installButton.style.cssText = 'position:fixed;bottom:20px;right:20px;z-index:9999;box-shadow:0 4px 12px rgba(0,0,0,.2)';
+  installButton.onclick = async () => {
+    if (deferredPrompt) {
+      deferredPrompt.prompt();
+      const { outcome } = await deferredPrompt.userChoice;
+      console.log('Installation:', outcome);
+      deferredPrompt = null;
+      installButton.remove();
+    }
+  };
+  
+  setTimeout(() => {
+    document.body.appendChild(installButton);
+    setTimeout(() => {
+      if (installButton.parentNode) {
+        installButton.remove();
+      }
+    }, 10000);
+  }, 3000);
+});
+
+window.addEventListener('appinstalled', () => {
+  console.log('✅ PWA installée avec succès !');
+  deferredPrompt = null;
+});
+</script>
 </body>
 </html>
