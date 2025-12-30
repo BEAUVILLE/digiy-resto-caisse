@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1, user-scalable=no" />
+  <title>Pilote de tableau de bord numérique — DIGIY DRIVER (0% commission)</title>
+  <meta name="description" content="Pilote chauffeur DIGIY DRIVER : partage GPS, statuts (Disponible/Occupé/Hors-ligne), envoi temps réel vers l’API. 0% commission, tout pour le pro." />
+  <meta name="theme-color" content="#0f0f10" />
+  <style>
+    :root{
+      --bg:#0f0f10; --card:#17181a; --ink:#ffffff; --muted:#b4b7bd;
+      --gold:#D4AF37; --ok:#4CAF50; --warn:#FF9800; --danger:#F44336;
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0; background:var(--bg); color:var(--ink); font-family: system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, 'Helvetica Neue', Arial, 'Noto Sans', 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol';
+      -webkit-font-smoothing:antialiased; -moz-osx-font-smoothing:grayscale;
+    }
+    .wrap{max-width:880px; margin:0 auto; padding:16px;}
+    .header{
+      border:1px solid rgba(212,175,55,.35);
+      border-radius:16px; padding:16px;
+      background:linear-gradient(135deg,#141517 0%, #0e0f11 100%);
+      box-shadow: 0 6px 24px rgba(0,0,0,.55), inset 0 0 0 1px rgba(255,255,255,.02);
+    }
+    h1{margin:0 0 4px; font-size: clamp(20px, 2.6vw, 28px); color:var(--gold); letter-spacing:.2px;}
+    .sub{margin:0; opacity:.85; color:var(--muted); font-size:14px}
+    .grid{display:grid; gap:12px; grid-template-columns: 1fr; margin-top:12px}
+    @media (min-width: 760px){ .grid{grid-template-columns: 1fr 1fr} }
+    .card{
+      background:var(--card); border:1px solid #26272b; border-radius:14px; padding:14px;
+      box-shadow: 0 4px 16px rgba(0,0,0,.35), inset 0 0 0 1px rgba(255,255,255,.02);
+    }
+    .row{display:flex; gap:8px; flex-wrap:wrap}
+    input, select, button{
+      background:#0e0f11; color:#fff; border:1px solid #2a2b2f; border-radius:10px; padding:10px 12px; font-size:14px;
+    }
+    input::placeholder{color:#6b6f76}
+    button{cursor:pointer; transition: transform .05s ease, opacity .2s ease}
+    button:active{transform: translateY(1px)}
+    .btn{background:#1a1b1f}
+    .btn-ok{background:#1b3b1f; border-color:#2a5f36}
+    .btn-warn{background:#3a2b13; border-color:#7a4f12}
+    .btn-danger{background:#351717; border-color:#7a2a2a}
+    .muted{color:var(--muted)}
+    .pill{display:inline-block; padding:6px 10px; border-radius:999px; border:1px solid #2a2b2f; background:#0e0f11; font-size:12px}
+    code{background:#0e0f11; padding:2px 6px; border-radius:6px; border:1px solid #2a2b2f}
+    .footer{opacity:.7; font-size:12px; margin-top:14px; text-align:center}
+    .brand{font-weight:700; letter-spacing:.3px}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header class="header">
+      <h1>Pilote de tableau de bord numérique</h1>
+      <p class="sub">Position, statuts, courses — en temps réel. <span class="brand">DIGIY DRIVER</span> • 0% commission • Paiement direct au pro.</p>
+    </header>
+
+    <section class="grid">
+      <div class="card">
+        <h3 style="margin:0 0 8px;">Inscription chauffeur</h3>
+        <form id="formReg" class="row" autocomplete="on">
+          <input id="regName" placeholder="Nom chauffeur (ex. Mamadou D.)" required />
+          <select id="regType">
+            <option value="Car" selected>Car</option>
+            <option value="Moto">Moto</option>
+            <option value="Van">Van</option>
+          </select>
+          <input id="regWhats" placeholder="WhatsApp (optionnel)" inputmode="tel" />
+          <button type="submit" class="btn">S’inscrire</button>
+        </form>
+
+        <div style="margin-top:10px; display:flex; gap:10px; flex-wrap:wrap">
+          <span class="pill">DriverID: <code id="driverIdView">—</code></span>
+          <span class="pill">Nom: <b id="driverName">—</b></span>
+          <span class="pill">Type: <b id="driverType">—</b></span>
+          <span class="pill">Whats: <b id="driverWhatsapp">—</b></span>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3 style="margin:0 0 8px;">Statuts & GPS</h3>
+        <div class="row" style="margin-bottom:8px">
+          <button id="btnOnline" class="btn-ok">Disponible</button>
+          <button id="btnBusy" class="btn-warn">Occupé</button>
+          <button id="btnOffline" class="btn-danger">Hors-ligne</button>
+          <button id="btnShare" class="btn">Partager ma position</button>
+          <button id="btnStop" class="btn">Stop GPS</button>
+        </div>
+        <div>Statut: <b id="status">offline</b></div>
+        <div>Dernier GPS: <span id="lastGps" class="muted">—</span></div>
+      </div>
+    </section>
+
+    <section class="card" style="margin-top:12px">
+      <h3 style="margin:0 0 8px;">Statistiques</h3>
+      <div class="row">
+        <span class="pill">Courses: <b id="statRides">0</b></span>
+        <span class="pill">Km: <b id="statKm">0</b></span>
+        <span class="pill">Note: <b id="statRating">—</b></span>
+      </div>
+    </section>
+
+    <p class="footer">∞ DIGIYLYFE — “0% commission, tout pour le pro.”</p>
+  </div>
+
+  <script>
+    const API = 'https://digiy-driver-api-1.onrender.com';
+    const LS = {
+      get id(){ return localStorage.getItem('driverId') || ''; },
+      set id(v){ localStorage.setItem('driverId', v); }
+    };
+    const $ = s => document.querySelector(s);
+    function toast(msg){ try{ console.log('ℹ️', msg); }catch(e){} }
+
+    async function api(path, opts={}){
+      const res = await fetch(API + path, {
+        headers: { 'Content-Type':'application/json' },
+        ...opts
+      });
+      if(!res.ok){
+        const t = await res.text().catch(()=>'');
+        throw new Error(t || ('HTTP ' + res.status));
+      }
+      return res.json();
+    }
+
+    async function registerDriver({name, type='Car', whatsapp=''}) {
+      const r = await api('/api/driver/register', {
+        method:'POST',
+        body: JSON.stringify({ name, type, whatsapp })
+      });
+      LS.id = r.driverId;
+      $('#driverIdView').textContent = LS.id || '—';
+      toast('Inscription ok: ' + LS.id);
+      await Promise.all([loadProfile(), loadStats()]);
+    }
+
+    async function loadProfile(){
+      if(!LS.id) return;
+      const p = await api('/api/driver/' + encodeURIComponent(LS.id));
+      $('#driverName').textContent = p.name || '—';
+      $('#driverType').textContent = p.type || '—';
+      $('#driverWhatsapp').textContent = p.whatsapp || '—';
+    }
+
+    async function loadStats(){
+      if(!LS.id) return;
+      const s = await api('/api/driver/' + encodeURIComponent(LS.id) + '/stats');
+      $('#statRides').textContent = s.totalRides ?? 0;
+      $('#statKm').textContent = s.totalKm ?? 0;
+      $('#statRating').textContent = s.rating ?? '—';
+    }
+
+    async function setStatus(state){
+      if(!LS.id) return toast('Inscris-toi d’abord');
+      await api('/api/driver/status', {
+        method:'POST',
+        body: JSON.stringify({ driverId: LS.id, status: state })
+      });
+      $('#status').textContent = state;
+      toast('Statut → ' + state);
+    }
+
+    let watchId = null;
+    let lastSentAt = 0;
+    const SEND_EVERY_MS = 30000;
+
+    async function sendLocation(pos){
+      if(!LS.id) return;
+      const now = Date.now();
+      if(now - lastSentAt < SEND_EVERY_MS) return;
+      lastSentAt = now;
+
+      const { latitude:lat, longitude:lng, accuracy, heading, speed } = pos.coords;
+      await api('/api/driver/location', {
+        method:'POST',
+        body: JSON.stringify({
+          driverId: LS.id,
+          lat, lng, accuracy, heading, speed,
+          timestamp: new Date().toISOString()
+        })
+      });
+      $('#lastGps').textContent = (lat?.toFixed ? lat.toFixed(5) : lat) + ', ' + (lng?.toFixed ? lng.toFixed(5) : lng) + ' • ' + new Date().toLocaleTimeString();
+      toast('GPS envoyé');
+    }
+
+    function startSharing(){
+      if(!navigator.geolocation) return alert('Géoloc non supportée');
+      if(watchId) return;
+      watchId = navigator.geolocation.watchPosition(
+        sendLocation,
+        (e)=>alert('Autorise la géoloc (HTTPS) • ' + e.message),
+        { enableHighAccuracy:true, maximumAge:5000, timeout:10000 }
+      );
+      toast('Partage GPS ON');
+    }
+    function stopSharing(){
+      if(watchId) navigator.geolocation.clearWatch(watchId);
+      watchId = null;
+      toast('Partage GPS OFF');
+    }
+
+    window.addEventListener('DOMContentLoaded', async ()=>{
+      $('#btnOnline').onclick = ()=>setStatus('online');
+      $('#btnBusy').onclick = ()=>setStatus('busy');
+      $('#btnOffline').onclick = ()=>setStatus('offline');
+      $('#btnShare').onclick = startSharing;
+      $('#btnStop').onclick = stopSharing;
+
+      if(LS.id){
+        $('#driverIdView').textContent = LS.id;
+        await Promise.all([loadProfile(), loadStats()]);
+      }
+
+      $('#formReg').onsubmit = async (e)=>{
+        e.preventDefault();
+        const name = $('#regName').value.trim();
+        const type = $('#regType').value.trim();
+        const whatsapp = $('#regWhats').value.trim();
+        if(!name) return alert('Nom requis');
+        try{
+          await registerDriver({ name, type, whatsapp });
+        }catch(err){
+          alert('Erreur inscription: ' + err.message);
+        }
+      };
+    });
+  </script>
+</body>
+</html>
