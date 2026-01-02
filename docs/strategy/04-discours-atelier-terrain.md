@@ -124,4 +124,3 @@ DIGIYLYFE vous aide à mieux travailler et vous gardez tout.”
 ❌ Pas de “révolutionnaire”, pas de “technologie de pointe”, pas de “IA”  
 ✅ “Système intelligent”, “outil d’analyse”, “décisions basées sur données”  
 Simple. Direct. Impact.
-

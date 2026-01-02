@@ -38,10 +38,9 @@
 - Groupes larges
 - Opt-out possible
 
-## Définition of Done (DoD)
+## Definition of Done (DoD)
 - Mobile-first
 - Lecture < 30 secondes
 - 1–3 actions max
 - Aucune mention “IA”
 - Logs + métriques d’impact (avant/après)
-

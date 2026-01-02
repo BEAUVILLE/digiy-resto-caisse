@@ -45,4 +45,3 @@ DIGIY vend de la souveraineté économique propulsée par l’intelligence.
 - Transparence : le pro voit des indicateurs, pas la “cuisine”.
 - Contrôle : le pro décide toujours (suggestion ≠ ordre).
 - Option d’exclusion : possibilité d’opt-out des benchmarks anonymisés si requis.
-

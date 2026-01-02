@@ -27,9 +27,9 @@
 - 3 actions concrètes suggérées
 
 **Intelligence cachée**
-- Score multi-critères : acceptation, temps, revenus, annulations
+- Score multi-critères : acceptation, annulation, temps, revenus, annulations
 - Benchmark anonymisé vs pairs (même zone/catégorie)
-- Détection patterns sous-optimaux (ex : heures creuses ignorées)
+- Détection patterns sous-optimaux
 
 **Message type**
 “📊 Score 78/100 (+5) — Action prioritaire : accepter courses courtes matin”
@@ -81,7 +81,7 @@
 **Intelligence cachée**
 - Modèle saisonnalité + historique
 - Intégration calendrier événements (météo plus tard si besoin)
-- Estimation impact prix sur réservation (simple)
+- Estimation impact prix zone (simple)
 
 **Message type**
 “📈 Week-end 12–14 jan : forte demande prévue | Prix suggéré : 45K CFA (+15%)”
@@ -122,4 +122,3 @@ Intelligence :
 - Prédictif : scripts planifiés (cron) / fonctions scheduled
 - ML léger : uniquement si nécessaire
 - LLM : via outil interne (préparation d’insights), jamais exposé côté pro
-
