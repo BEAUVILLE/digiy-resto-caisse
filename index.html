@@ -267,6 +267,53 @@
   </style>
 </head>
 <body>
+<!-- ========================================== -->
+<!-- GUARD RESTO PRO -->
+<!-- ========================================== -->
+<div id="guard_status" style="
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  padding: 12px 20px;
+  background: rgba(0, 0, 0, 0.9);
+  color: white;
+  border-radius: 10px;
+  font-weight: 700;
+  font-size: 14px;
+  z-index: 9999;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+">🔐 Vérification...</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="./guard.js"></script>
+<script>
+  (async () => {
+    // ✅ MODULE = "RESTO_PRO" (majuscule comme dans la DB)
+    const ok = await window.DIGIY.guardOrPay("RESTO_PRO", "/digiy-resto/login.html");
+    if (!ok) return; // Redirigé
+    
+    // ✅ Accès OK
+    console.log("🦅 RESTO PRO chargé avec succès");
+    document.documentElement.classList.add("access-ok");
+    
+    // Masquer le status
+    setTimeout(() => {
+      const s = document.getElementById("guard_status");
+      if (s) s.style.display = "none";
+    }, 1200);
+  })();
+</script>
+<!-- ========================================== -->
+<!-- APP RESTO PRO -->
+<!-- ========================================== -->
+<div class="app">
+  <div id="offlineBanner" style="display:none" class="offline-banner">
+    ⚠️ Mode hors ligne — Les modifications seront synchronisées dès le retour de la connexion
+  </div>
+  
+  <!-- TON CODE EXISTANT ICI -->
+  <header>
+    <!-- ... -->  
 <div class="app">
   <div id="offlineBanner" style="display:none" class="offline-banner">
     ⚠️ Mode hors ligne — Les modifications seront synchronisées dès le retour de la connexion
