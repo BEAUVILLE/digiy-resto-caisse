@@ -215,131 +215,116 @@
   </div>
 
   <script>
-    // CONFIG SUPABASE - Utiliser le client existant ou en créer un nouveau
-    let supabaseClient;
-    
-    // Vérifier si Supabase est chargé
-    if (typeof window.supabase === 'undefined') {
-      console.error('⚠️ Supabase non chargé !');
-      alert('Erreur : Bibliothèque Supabase non disponible');
-    } else {
-      // Créer le client Supabase SANS redéclaration
-const SUPABASE_URL = "https://wesqmwjjtsefyjnluosj.supabase.co";
-const SUPABASE_ANON_KEY =
-  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Indlc3Ftd2pqdHNlZnlqbmx1b3NqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjUxNzg4ODIsImV4cCI6MjA4MDc1NDg4Mn0.dZfYOc2iL2_wRYL3zExZFsFSBK6AbMeOid2LrIjcTdA";
-      
-      supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  // CONFIG SUPABASE
+  let supabaseClient;
+
+  if (typeof window.supabase === 'undefined') {
+    console.error('⚠️ Supabase non chargé !');
+    alert('Erreur : Bibliothèque Supabase non disponible');
+  } else {
+    const SUPABASE_URL = 'https://wesqmwjjtsefyjnluosj.supabase.co';
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Indlc3Ftd2pqdHNlZnlqbmx1b3NqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjUxNzg4ODIsImV4cCI6MjA4MDc1NDg4Mn0.dZfYOc2iL2_wRYL3zExZFsFSBK6AbMeOid2LrIjcTdA';
+    supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  }
+
+  function showError(message) {
+    const errorDiv = document.getElementById('errorMessage');
+    errorDiv.textContent = message;
+    errorDiv.classList.add('show');
+  }
+
+  function formatSlugToName(slug) {
+    return slug
+      .split('-')
+      .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(' ');
+  }
+
+  // ✅ Vérifier si déjà connecté (GitHub Pages SAFE)
+  window.addEventListener('DOMContentLoaded', () => {
+    const session = localStorage.getItem('digiy_session');
+    if (!session) return;
+
+    try {
+      const data = JSON.parse(session);
+      const now = Date.now();
+
+      if (data.expiry && data.expiry > now && data.ownerId && data.slug) {
+        window.location.href = './index.html?slug=' + encodeURIComponent(data.slug);
+      }
+    } catch (_) {
+      // session invalide -> rester sur login
     }
-// CONNEXION
-document.getElementById('loginForm').addEventListener('submit', async (e) => {
-  e.preventDefault();
+  });
 
-  if (!supabaseClient) {
-    showError('Client Supabase non disponible');
-    return;
-  }
+  // ✅ CONNEXION
+  document.getElementById('loginForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
 
-  const slug = document.getElementById('slugInput').value.trim();
-  const pin  = document.getElementById('pinInput').value.trim();
-  const loginBtn = document.getElementById('loginBtn');
-  const errorDiv = document.getElementById('errorMessage');
-
-  if (!/^[0-9]{4}$/.test(pin)) {
-    showError('Le PIN doit contenir exactement 4 chiffres');
-    return;
-  }
-
-  loginBtn.disabled = true;
-  loginBtn.textContent = 'Connexion...';
-  errorDiv.classList.remove('show');
-
-  try {
-    // ✅ LOG AVANT RPC
-    console.log("👉 AVANT RPC", { slug, pin });
-
-    // ✅ RPC (avec le BON client)
-    const { data, error } = await supabaseClient.rpc('verify_access_pin', {
-      p_slug: slug,
-      p_pin: pin
-    });
-
-    // ✅ LOG RETOUR RPC
-    console.log("👉 RPC error =", error);
-    console.log("👉 RPC data =", data);
-    console.log("👉 RPC typeof data =", typeof data);
-
-    if (error) throw error;
-
-    // ⚠️ data peut être string JSON selon ton RPC
-    const result = typeof data === "string" ? JSON.parse(data) : data;
-
-    if (result && result.owner_id) {
-      const expiry = Date.now() + (8 * 60 * 60 * 1000); // 8h
-
-      const sessionData = {
-        ownerId: result.owner_id,
-        slug: result.slug || slug,
-        restoName: result.title || formatSlugToName(slug),
-        expiry
-      };
-
-      localStorage.setItem('digiy_session', JSON.stringify(sessionData));
-      console.log("✅ SESSION SAVED digiy_session =", localStorage.getItem("digiy_session"));
-
-      // ✅ redirect (GitHub Pages SAFE)
-      window.location.href = './index.html?slug=' + encodeURIComponent(sessionData.slug);
+    if (!supabaseClient) {
+      showError('Client Supabase non disponible');
       return;
     }
 
-    showError('Slug ou PIN incorrect');
-    loginBtn.disabled = false;
-    loginBtn.textContent = 'Se connecter';
+    const slug = document.getElementById('slugInput').value.trim();
+    const pin  = document.getElementById('pinInput').value.trim();
+    const loginBtn = document.getElementById('loginBtn');
+    const errorDiv = document.getElementById('errorMessage');
 
-  } catch (err) {
-    console.error('Erreur connexion:', err);
-    showError('Erreur de connexion : ' + (err?.message || 'inconnue'));
-    loginBtn.disabled = false;
-    loginBtn.textContent = 'Se connecter';
-  }
-      } catch (err) {
-        console.error('Erreur connexion:', err);
-        showError('Erreur de connexion. Vérifiez votre connexion.');
-        loginBtn.disabled = false;
-        loginBtn.textContent = 'Se connecter';
-      }
-    });
-
-    function showError(message) {
-      const errorDiv = document.getElementById('errorMessage');
-      errorDiv.textContent = message;
-      errorDiv.classList.add('show');
+    if (!/^[0-9]{4}$/.test(pin)) {
+      showError('Le PIN doit contenir exactement 4 chiffres');
+      return;
     }
 
-    function formatSlugToName(slug) {
-      return slug
-        .split('-')
-        .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-        .join(' ');
-    }
+    loginBtn.disabled = true;
+    loginBtn.textContent = 'Connexion...';
+    errorDiv.classList.remove('show');
 
-    // Vérifier si déjà connecté
-    window.addEventListener('DOMContentLoaded', () => {
-      const session = localStorage.getItem('digiy_session');
-      if (session) {
-        try {
-          const data = JSON.parse(session);
-          const now = Date.now();
-          
-          if (data.expiry && data.expiry > now && data.ownerId) {
-            // Session valide, rediriger
-            window.location.href = '/digiy-resto-caisse/';
-          }
-        } catch (e) {
-          // Session invalide, rester sur login
-        }
+    try {
+      console.log("👉 AVANT RPC", { slug, pin });
+
+      const { data, error } = await supabaseClient.rpc('verify_access_pin', {
+        p_slug: slug,
+        p_pin: pin
+      });
+
+      console.log("👉 RPC error =", error);
+      console.log("👉 RPC data =", data);
+      console.log("👉 RPC typeof data =", typeof data);
+
+      if (error) throw error;
+
+      const result = typeof data === "string" ? JSON.parse(data) : data;
+
+      if (result && result.owner_id) {
+        const expiry = Date.now() + (8 * 60 * 60 * 1000);
+
+        const sessionData = {
+          ownerId: result.owner_id,
+          slug: result.slug || slug,
+          restoName: result.title || formatSlugToName(slug),
+          expiry
+        };
+
+        localStorage.setItem('digiy_session', JSON.stringify(sessionData));
+        console.log("✅ SESSION SAVED digiy_session =", localStorage.getItem("digiy_session"));
+
+        window.location.href = './index.html?slug=' + encodeURIComponent(sessionData.slug);
+        return;
       }
-    });
-  </script>
+
+      showError('Slug ou PIN incorrect');
+      loginBtn.disabled = false;
+      loginBtn.textContent = 'Se connecter';
+
+    } catch (err) {
+      console.error('Erreur connexion:', err);
+      showError('Erreur de connexion : ' + (err?.message || 'inconnue'));
+      loginBtn.disabled = false;
+      loginBtn.textContent = 'Se connecter';
+    }
+  });
+</script>
 
 </body>
 </html>
