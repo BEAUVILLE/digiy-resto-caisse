@@ -1,5 +1,8 @@
 <!DOCTYPE html>
 <html lang="fr">
+  <!-- DIGIY CORE -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="./guard.js"></script>
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1, user-scalable=no">
@@ -293,7 +296,8 @@
     }
 
     // ✅ IMPORTANT: ta DB = category "service"
-    const ok = await window.DIGIY.guardOrPay("service", "/digiy-resto-caisse/login.html");
+    const ok = await window.DIGIY.guardOrPay("service", "./login.html");
+
     if (!ok) return;
 
     console.log("🦅 RESTO PRO accès OK");
@@ -1576,38 +1580,28 @@ window.addEventListener('appinstalled', () => {
   console.log('✅ PWA installée avec succès !');
   deferredPrompt = null;
 });
-</script>
-</body>
-<!-- ========================================== -->
-<!-- GUARD RESTO PRO -->
-<!-- ========================================== -->
-<div id="guard_status" style="
-  position: fixed;
-  top: 20px;
-  right: 20px;
-  padding: 12px 20px;
-  background: rgba(0, 0, 0, 0.9);
-  color: white;
-  border-radius: 10px;
-  font-weight: 700;
-  font-size: 14px;
-  z-index: 9999;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-">🔐 Vérification...</div>
 
-<script src="./guard.js"></script>
+</script> <!-- fin de ton gros script app -->
+
 <script>
-  (async () => {
-    const ok = await window.DIGIY.guardOrPay("RESTO_PRO", "/digiy-resto-caisse/login.html");
-    if (!ok) return;
-    
-    console.log("🦅 RESTO PRO chargé avec succès");
-    document.documentElement.classList.add("access-ok");
-    
-    setTimeout(() => {
-      const s = document.getElementById("guard_status");
-      if (s) s.style.display = "none";
-    }, 1200);
-  })();
-</script>    
+if ('serviceWorker' in navigator) {
+  const isProd = window.location.hostname !== 'localhost' 
+    && window.location.hostname !== '127.0.0.1'
+    && !window.location.hostname.includes('claudeusercontent');
+
+  if (isProd) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('./sw.js')
+        .then((registration) => {
+          console.log('✅ Service Worker enregistré:', registration.scope);
+        })
+        .catch((error) => {
+          console.log('⚠️ Service Worker non disponible:', error.message);
+        });
+    });
+  }
+}
+</script>
+
+</body>
 </html>
