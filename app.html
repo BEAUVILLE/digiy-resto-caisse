@@ -296,8 +296,19 @@
     const ok = await window.DIGIY.guardOrPay("service", "/digiy-resto-caisse/login.html");
     if (!ok) return;
 
-    console.log("🦅 RESTO PRO accès OK");
-    document.documentElement.classList.add("access-ok");
+   // ✅ Accès confirmé — initialisation RESTO PRO
+window.DIGIY_READY = true;
+
+document.documentElement.classList.add("access-ok");
+
+// Affiche le slug actif (debug terrain)
+const slug = new URL(location.href).searchParams.get("slug");
+console.log("🦅 RESTO PRO READY — slug =", slug);
+
+// Optionnel : bannière ou hook d'init
+if (typeof window.initRestoApp === "function") {
+  window.initRestoApp(slug);
+}
 
     setTimeout(() => {
       const s = document.getElementById("guard_status");
