@@ -266,44 +266,52 @@
     }
   </style>
 </head>
-<body>
+<body
 
-
-<script src="./guard.js"></script>
-<script>
-  (async () => {
-    const ok = await window.DIGIY.guardOrPay("RESTO_PRO", "/digiy-resto-caisse/login.html");
-    if (!ok) return;
-    
-    console.log("🦅 RESTO PRO chargé avec succès");
-    document.documentElement.classList.add("access-ok");
-    
-    setTimeout(() => {
-      const s = document.getElementById("guard_status");
-      if (s) s.style.display = "none";
-    }, 1200);
-  })();
-<!-- ========================================== -->
-
+<!-- Supabase JS v2 -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="./guard.js"></script>
+
+<!-- Guard RESTO (doit exister à cette URL, sinon 404) -->
+<script src="./guard.js?v=20260122"></script>
+
+<!-- Guard Status (optionnel mais utile) -->
+<div id="guard_status" style="
+  position: fixed; top: 16px; right: 16px;
+  padding: 10px 14px; background: rgba(0,0,0,.88);
+  color: #fff; border-radius: 12px;
+  font-weight: 900; font-size: 12px;
+  z-index: 9999;
+">🔐 Vérification…</div>
+
 <script>
-  (async () => {
-    // ✅ MODULE = "RESTO_PRO" (majuscule comme dans la DB)
-    const ok = await window.DIGIY.guardOrPay("RESTO_PRO", "/digiy-resto/login.html");
-    if (!ok) return; // Redirigé
-    
-    // ✅ Accès OK
-    console.log("🦅 RESTO PRO chargé avec succès");
+(async () => {
+  try{
+    if(!window.DIGIY || typeof window.DIGIY.guardOrPay !== "function"){
+      console.error("DIGIY guard absent / guard.js non chargé");
+      document.getElementById("guard_status").textContent = "❌ Guard absent";
+      return;
+    }
+
+    // ✅ IMPORTANT: ta DB = category "service"
+    const ok = await window.DIGIY.guardOrPay("service", "/digiy-resto-caisse/login.html");
+    if (!ok) return;
+
+    console.log("🦅 RESTO PRO accès OK");
     document.documentElement.classList.add("access-ok");
-    
-    // Masquer le status
+
     setTimeout(() => {
       const s = document.getElementById("guard_status");
       if (s) s.style.display = "none";
-    }, 1200);
-  })();
+    }, 800);
+
+  }catch(e){
+    console.error(e);
+    const s = document.getElementById("guard_status");
+    if(s) s.textContent = "❌ Erreur accès";
+  }
+})();
 </script>
+
 <!-- ========================================== -->
 <!-- APP RESTO PRO -->
 <!-- ========================================== -->
