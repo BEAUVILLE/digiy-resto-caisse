@@ -326,11 +326,20 @@
   </div>
 
   <script>
-    // CONFIG SUPABASE
-    const SUPABASE_URL = 'https://gbnuvxyztjdlzsyzypnq.supabase.co';
-    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdibnV2eHl6dGpkbHpzeXp5cG5xIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzY3NzI0NDEsImV4cCI6MjA1MjM0ODQ0MX0.OThgIDmgmF9y_6bIVbRWwjdOq1SFMsNuRWwUQmHlMZM';
+    // CONFIG SUPABASE - Utiliser le client existant ou en créer un nouveau
+    let supabaseClient;
     
-    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    // Vérifier si Supabase est chargé
+    if (typeof window.supabase === 'undefined') {
+      console.error('⚠️ Supabase non chargé !');
+      alert('Erreur : Bibliothèque Supabase non disponible');
+    } else {
+      // Créer le client Supabase SANS redéclaration
+      const SUPABASE_URL = 'https://gbnuvxyztjdlzsyzypnq.supabase.co';
+      const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdibnV2eHl6dGpkbHpzeXp5cG5xIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzY3NzI0NDEsImV4cCI6MjA1MjM0ODQ0MX0.OThgIDmgmF9y_6bIVbRWwjdOq1SFMsNuRWwUQmHlMZM';
+      
+      supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    }
 
     // Elements
     const pinInput = document.getElementById('pinInput');
@@ -363,6 +372,11 @@
     document.getElementById('pinForm').addEventListener('submit', async (e) => {
       e.preventDefault();
       
+      if (!supabaseClient) {
+        showError('Client Supabase non disponible');
+        return;
+      }
+
       const slug = slugInput.value.trim();
       const pin = pinInput.value.trim();
       const loginBtn = document.getElementById('loginBtn');
@@ -385,7 +399,7 @@
 
       try {
         // APPEL RPC verify_access_pin
-        const { data, error } = await supabase.rpc('verify_access_pin', {
+        const { data, error } = await supabaseClient.rpc('verify_access_pin', {
           p_slug: slug,
           p_pin: pin
         });
