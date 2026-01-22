@@ -1,339 +1,114 @@
-<!DOCTYPE html>
-<html lang="fr">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>RESTO PRO - Connexion PIN</title>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-      background: linear-gradient(135deg, #faf7f0 0%, #fff9ed 100%);
-      min-height: 100vh;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 20px;
-    }
-    .pin-container {
-      background: white;
-      border-radius: 24px;
-      padding: 40px;
-      max-width: 420px;
-      width: 100%;
-      box-shadow: 0 10px 40px rgba(0,0,0,0.1);
-      border: 1px solid #e1d8c6;
-    }
-    .pin-header { text-align: center; margin-bottom: 40px; }
-    .logo {
-      width: 80px; height: 80px; border-radius: 20px;
-      background: linear-gradient(135deg, #fff7d1, #ffe9a6);
-      display: inline-grid; place-items: center;
-      border: 2px solid #ead8a6;
-      box-shadow: 0 0 20px rgba(212,175,55,.25);
-      font-size: 40px; margin-bottom: 20px;
-    }
-    h1 { color: #1a1c1f; font-size: 32px; font-weight: 900; margin-bottom: 8px; }
-    .subtitle { color: #6b7280; font-size: 15px; font-weight: 500; }
-    .form-group { margin-bottom: 24px; }
-    label {
-      display: block; color: #2b2f36; font-weight: 700;
-      margin-bottom: 10px; font-size: 14px;
-      text-transform: uppercase; letter-spacing: 0.5px;
-    }
-    input {
-      width: 100%; padding: 16px 20px;
-      border: 2px solid #e1d8c6; border-radius: 12px;
-      font-size: 18px; transition: all 0.3s; background: #fafafa;
-    }
-    input:focus {
-      outline: none; border-color: #d4af37;
-      background: white; box-shadow: 0 0 0 4px rgba(212,175,55,0.1);
-    }
-    .slug-input {
-      font-family: ui-monospace, Menlo, monospace;
-      text-transform: lowercase;
-    }
-    .pin-input {
-      text-align: center; letter-spacing: 16px;
-      font-size: 32px; font-weight: 900;
-      font-family: ui-monospace, Menlo, monospace;
-      padding-left: 24px;
-    }
-    .pin-dots { display: flex; justify-content: center; gap: 12px; margin-top: 12px; }
-    .dot {
-      width: 16px; height: 16px; border-radius: 50%;
-      background: #e5e7eb; transition: all 0.2s;
-    }
-    .dot.filled {
-      background: #d4af37;
-      box-shadow: 0 0 0 4px rgba(212,175,55,0.2);
-    }
-    .btn-login {
-      width: 100%; padding: 18px;
-      background: linear-gradient(135deg, #d4af37 0%, #b8952f 100%);
-      color: white; border: none; border-radius: 12px;
-      font-size: 18px; font-weight: 700; cursor: pointer;
-      transition: all 0.3s;
-      box-shadow: 0 4px 12px rgba(212,175,55,0.3);
-      text-transform: uppercase; letter-spacing: 1px;
-    }
-    .btn-login:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 6px 20px rgba(212,175,55,0.4);
-    }
-    .btn-login:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
-    .error-message {
-      background: #fee; border: 2px solid #fca5a5; color: #991b1b;
-      padding: 14px 16px; border-radius: 10px; margin-bottom: 24px;
-      font-size: 14px; font-weight: 600; display: none;
-      animation: shake 0.4s;
-    }
-    .error-message.show { display: block; }
-    @keyframes shake {
-      0%, 100% { transform: translateX(0); }
-      25% { transform: translateX(-10px); }
-      75% { transform: translateX(10px); }
-    }
-    .info-box {
-      background: #fef3c7; border: 2px solid #fde047; color: #713f12;
-      padding: 16px; border-radius: 10px; margin-top: 24px;
-      font-size: 13px; font-weight: 600;
-    }
-    .info-box strong { display: block; margin-bottom: 8px; font-size: 14px; }
-    .info-box code {
-      background: #fff; padding: 2px 8px; border-radius: 4px;
-      font-family: ui-monospace, Menlo, monospace;
-      color: #d97706; font-weight: 700;
-    }
-    .session-info {
-      display: flex; justify-content: center; align-items: center;
-      gap: 8px; margin-top: 16px; color: #6b7280;
-      font-size: 12px; font-weight: 600;
-    }
-    .status-indicator {
-      width: 8px; height: 8px; border-radius: 50%;
-      background: #10b981; animation: pulse 2s infinite;
-    }
-    @keyframes pulse {
-      0%, 100% { opacity: 1; }
-      50% { opacity: 0.5; }
-    }
-  </style>
-</head>
-<body>
+/**
+ * 🦅 DIGIY GUARD - Système d'authentification centralisé
+ * Utilise go_pins + RPC verify_access_pin
+ * Session : 8 heures
+ * 
+ * Version: 2.0
+ * Projet Supabase: wesqmwjjtsefyjnluosj (RESTO PRO)
+ * Repo: digiy-resto-caisse
+ */
 
-  <div class="pin-container">
-    <div class="pin-header">
-      <div class="logo">🍽️</div>
-      <h1>RESTO PRO</h1>
-      <div class="subtitle">Connexion sécurisée</div>
-    </div>
+(function() {
+  'use strict';
 
-    <div class="error-message" id="errorMessage"></div>
+  // ✅ BONNE URL SUPABASE (celle de index.html RESTO PRO)
+  const SUPABASE_URL = "https://wesqmwjjtsefyjnluosj.supabase.co";
+  const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Indlc3Ftd2pqdHNlZnlqbmx1b3NqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjUxNzg4ODIsImV4cCI6MjA4MDc1NDg4Mn0.dZfYOc2iL2_wRYL3zExZFsFSBK6AbMeOid2LrIjcTdA";
 
-    <form id="pinForm">
-      <div class="form-group">
-        <label for="slugInput">🏪 Nom du restaurant</label>
-        <input 
-          type="text" 
-          id="slugInput" 
-          class="slug-input"
-          placeholder="resto-chez-fatou-saly"
-          autocomplete="off"
-          autocapitalize="off"
-          spellcheck="false"
-          required
-        >
-      </div>
-
-      <div class="form-group">
-        <label for="pinInput">🔐 Code PIN</label>
-        <input 
-          type="text" 
-          id="pinInput" 
-          class="pin-input"
-          placeholder="••••"
-          maxlength="4"
-          pattern="[0-9]{4}"
-          inputmode="numeric"
-          autocomplete="off"
-          required
-        >
-        <div class="pin-dots" id="pinDots">
-          <div class="dot"></div>
-          <div class="dot"></div>
-          <div class="dot"></div>
-          <div class="dot"></div>
-        </div>
-      </div>
-
-      <button type="submit" class="btn-login" id="loginBtn">
-        🚀 Accéder
-      </button>
-    </form>
-
-    <div class="session-info">
-      <div class="status-indicator"></div>
-      <span>Session sécurisée 8 heures</span>
-    </div>
-
-    <div class="info-box">
-      <strong>🧪 Compte de test</strong>
-      Slug: <code>resto-chez-fatou-saly</code><br>
-      PIN: <code>4888</code>
-    </div>
-  </div>
-
-  <script>
-    // ✅ BONNE URL SUPABASE (celle de ton index.html RESTO PRO)
-    const SUPABASE_URL = "https://wesqmwjjtsefyjnluosj.supabase.co";
-    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Indlc3Ftd2pqdHNlZnlqbmx1b3NqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjUxNzg4ODIsImV4cCI6MjA4MDc1NDg4Mn0.dZfYOc2iL2_wRYL3zExZFsFSBK6AbMeOid2LrIjcTdA";
-    
-    let supabaseClient;
-    
+  // Fonction pour obtenir/créer le client Supabase
+  function getSupabaseClient() {
     if (typeof window.supabase === 'undefined') {
-      console.error('⚠️ Supabase non chargé !');
-      alert('Erreur : Bibliothèque Supabase non disponible');
-    } else {
-      supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-      console.log('✅ Client Supabase créé');
+      console.error('❌ Supabase library not loaded');
+      return null;
     }
 
-    const pinInput = document.getElementById('pinInput');
-    const pinDots = document.getElementById('pinDots');
-    const slugInput = document.getElementById('slugInput');
-
-    pinInput.addEventListener('input', (e) => {
-      const value = e.target.value;
-      const dots = pinDots.querySelectorAll('.dot');
-      dots.forEach((dot, index) => {
-        if (index < value.length) {
-          dot.classList.add('filled');
-        } else {
-          dot.classList.remove('filled');
-        }
-      });
-    });
-
-    slugInput.addEventListener('input', (e) => {
-      let value = e.target.value.toLowerCase();
-      value = value.replace(/\s+/g, '-');
-      value = value.replace(/[^a-z0-9-]/g, '');
-      e.target.value = value;
-    });
-
-    document.getElementById('pinForm').addEventListener('submit', async (e) => {
-      e.preventDefault();
-      
-      if (!supabaseClient) {
-        showError('Client Supabase non disponible');
-        return;
-      }
-
-      const slug = slugInput.value.trim();
-      const pin = pinInput.value.trim();
-      const loginBtn = document.getElementById('loginBtn');
-      const errorDiv = document.getElementById('errorMessage');
-
-      if (!slug) {
-        showError('Le nom du restaurant est requis');
-        return;
-      }
-
-      if (!/^[0-9]{4}$/.test(pin)) {
-        showError('Le PIN doit contenir exactement 4 chiffres');
-        return;
-      }
-
-      loginBtn.disabled = true;
-      loginBtn.innerHTML = '⏳ Connexion...';
-      errorDiv.classList.remove('show');
-
-      try {
-        console.log('🔍 Appel RPC verify_access_pin...');
-        console.log('Slug:', slug);
-        console.log('PIN:', pin);
-
-        const { data, error } = await supabaseClient.rpc('verify_access_pin', {
-          p_slug: slug,
-          p_pin: pin
-        });
-
-        if (error) {
-          console.error('❌ Erreur RPC:', error);
-          throw error;
-        }
-
-        console.log('✅ Réponse reçue:', data);
-
-        if (data && data.owner_id) {
-          const expiry = Date.now() + (8 * 60 * 60 * 1000);
-          
-          const sessionData = {
-            ownerId: data.owner_id,
-            slug: slug,
-            restoName: formatSlugToName(slug),
-            expiry: expiry,
-            loginTime: new Date().toISOString()
-          };
-
-          localStorage.setItem('digiy_session', JSON.stringify(sessionData));
-
-          loginBtn.innerHTML = '✅ Connexion réussie !';
-          loginBtn.style.background = 'linear-gradient(135deg, #10b981 0%, #059669 100%)';
-
-          console.log('✅ Redirection vers /digiy-resto-caisse/');
-          
-          setTimeout(() => {
-            window.location.href = '/digiy-resto-caisse/';
-          }, 800);
-        } else {
-          showError('❌ Slug ou PIN incorrect');
-          loginBtn.disabled = false;
-          loginBtn.innerHTML = '🚀 Accéder';
-        }
-      } catch (err) {
-        console.error('❌ Erreur connexion:', err);
-        showError('⚠️ Erreur: ' + (err.message || 'Connexion impossible'));
-        loginBtn.disabled = false;
-        loginBtn.innerHTML = '🚀 Accéder';
-      }
-    });
-
-    function showError(message) {
-      const errorDiv = document.getElementById('errorMessage');
-      errorDiv.textContent = message;
-      errorDiv.classList.add('show');
-      setTimeout(() => errorDiv.classList.remove('show'), 5000);
+    // Si un client existe déjà (par exemple dans index.html)
+    if (window.supa) {
+      console.log('✅ Using existing Supabase client');
+      return window.supa;
     }
 
-    function formatSlugToName(slug) {
-      return slug.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
+    // Sinon créer un nouveau client
+    try {
+      const client = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+      console.log('✅ New Supabase client created for guard');
+      return client;
+    } catch (err) {
+      console.error('❌ Error creating Supabase client:', err);
+      return null;
+    }
+  }
+
+  // Fonction pour vérifier la session locale
+  function checkLocalSession() {
+    const sessionStr = localStorage.getItem('digiy_session');
+    
+    if (!sessionStr) {
+      console.log('❌ No session in localStorage');
+      return null;
     }
 
-    window.addEventListener('DOMContentLoaded', () => {
-      const session = localStorage.getItem('digiy_session');
-      if (session) {
-        try {
-          const data = JSON.parse(session);
-          const now = Date.now();
-          
-          if (data.expiry && data.expiry > now && data.ownerId) {
-            console.log('Session valide détectée, redirection...');
-            window.location.href = '/digiy-resto-caisse/';
-            return;
-          } else {
-            localStorage.removeItem('digiy_session');
-          }
-        } catch (e) {
-          localStorage.removeItem('digiy_session');
-        }
-      }
-      slugInput.focus();
-    });
-  </script>
+    try {
+      const session = JSON.parse(sessionStr);
+      const now = Date.now();
 
-</body>
-</html>
+      // Vérifier expiration
+      if (!session.expiry || session.expiry < now) {
+        console.log('⏰ Session expired');
+        localStorage.removeItem('digiy_session');
+        return null;
+      }
+
+      // Vérifier que les champs requis existent
+      if (!session.ownerId || !session.slug) {
+        console.log('⚠️ Invalid session format');
+        localStorage.removeItem('digiy_session');
+        return null;
+      }
+
+      console.log('✅ Valid local session found');
+      console.log('Owner ID:', session.ownerId);
+      console.log('Slug:', session.slug);
+      console.log('Expires:', new Date(session.expiry).toLocaleString());
+
+      return session;
+    } catch (err) {
+      console.error('❌ Error parsing session:', err);
+      localStorage.removeItem('digiy_session');
+      return null;
+    }
+  }
+
+  // Fonction principale du guard
+  async function guardOrPay(moduleName = 'APP', loginUrl = '/digiy-resto-caisse/pin.html') {
+    console.log('🔐 DIGIY GUARD - Checking access for:', moduleName);
+
+    // 1. Vérifier session locale
+    const session = checkLocalSession();
+    
+    if (!session) {
+      console.log('❌ No valid session - Redirecting to login');
+      window.location.href = loginUrl;
+      return false;
+    }
+
+    // 2. Session valide trouvée
+    console.log('✅ Session valid - Access granted');
+    
+    // Optionnel: Vérifier l'abonnement dans une table subscriptions
+    // Pour l'instant, on accepte toute session valide
+    
+    return true;
+  }
+
+  // Exposer les fonctions globalement
+  window.DIGIY = window.DIGIY || {};
+  window.DIGIY.guardOrPay = guardOrPay;
+  window.DIGIY.checkLocalSession = checkLocalSession;
+  window.DIGIY.getSupabaseClient = getSupabaseClient;
+
+  console.log('🦅 DIGIY Guard loaded - v2.0');
+  console.log('Supabase URL:', SUPABASE_URL);
+  console.log('Repo: digiy-resto-caisse');
+
+})();
