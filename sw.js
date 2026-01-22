@@ -1,92 +1,74 @@
-// 🦅 DIGIY RESTO PRO - Service Worker
-const CACHE_NAME = 'digiy-resto-v1';
-const ASSETS_TO_CACHE = [
+// 🦅 DIGIY Service Worker - RESTO PRO
+// Version: 1.0
+// Cache strategy: Network First, fallback to Cache
+
+const CACHE_NAME = 'digiy-resto-caisse-v1';
+const urlsToCache = [
   '/digiy-resto-caisse/',
   '/digiy-resto-caisse/index.html',
   '/digiy-resto-caisse/guard.js',
   '/digiy-resto-caisse/pin.html',
-  '/digiy-resto-caisse/manifest.json',
-  'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2'
+  '/digiy-resto-caisse/manifest.json'
 ];
 
-// Installation du Service Worker
+// Installation
 self.addEventListener('install', (event) => {
-  console.log('[SW] Installation...');
+  console.log('🦅 Service Worker: Installation');
   event.waitUntil(
     caches.open(CACHE_NAME)
       .then((cache) => {
-        console.log('[SW] Cache ouvert');
-        return cache.addAll(ASSETS_TO_CACHE.map(url => {
-          return new Request(url, { cache: 'reload' });
-        })).catch(err => {
-          console.warn('[SW] Erreur cache assets:', err);
-        });
+        console.log('✅ Cache ouvert');
+        return cache.addAll(urlsToCache);
       })
+      .then(() => self.skipWaiting())
   );
-  self.skipWaiting();
 });
 
-// Activation du Service Worker
+// Activation
 self.addEventListener('activate', (event) => {
-  console.log('[SW] Activation...');
+  console.log('🦅 Service Worker: Activation');
   event.waitUntil(
     caches.keys().then((cacheNames) => {
       return Promise.all(
         cacheNames.map((cacheName) => {
           if (cacheName !== CACHE_NAME) {
-            console.log('[SW] Suppression ancien cache:', cacheName);
+            console.log('🗑️ Suppression ancien cache:', cacheName);
             return caches.delete(cacheName);
           }
         })
       );
-    })
+    }).then(() => self.clients.claim())
   );
-  self.clients.claim();
 });
 
-// Stratégie de cache : Network First, fallback sur Cache
+// Fetch - Network First, fallback Cache
 self.addEventListener('fetch', (event) => {
-  // Ignorer les requêtes non-GET
-  if (event.request.method !== 'GET') {
-    return;
-  }
-
-  // Ignorer les requêtes Supabase (toujours en ligne)
-  if (event.request.url.includes('supabase.co')) {
-    return;
-  }
-
   event.respondWith(
     fetch(event.request)
       .then((response) => {
-        // Clone la réponse pour la mettre en cache
+        // Clone la réponse
         const responseToCache = response.clone();
         
-        caches.open(CACHE_NAME).then((cache) => {
-          cache.put(event.request, responseToCache);
-        });
-
+        // Met en cache
+        caches.open(CACHE_NAME)
+          .then((cache) => {
+            cache.put(event.request, responseToCache);
+          });
+        
         return response;
       })
       .catch(() => {
-        // Si le réseau échoue, utiliser le cache
-        return caches.match(event.request).then((cachedResponse) => {
-          if (cachedResponse) {
-            return cachedResponse;
-          }
-          
-          // Si pas en cache, page hors ligne
-          return caches.match('/digiy-resto-caisse/index.html');
-        });
+        // Si réseau échoue, utilise le cache
+        return caches.match(event.request);
       })
   );
 });
 
-// Message handler pour forcer le skip waiting
+// Message handler
 self.addEventListener('message', (event) => {
   if (event.data && event.data.type === 'SKIP_WAITING') {
     self.skipWaiting();
   }
 });
 
-console.log('🦅 Service Worker RESTO PRO chargé');
+console.log('🦅 DIGIY Service Worker chargé - RESTO PRO');
