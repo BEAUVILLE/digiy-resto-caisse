@@ -230,59 +230,77 @@ const SUPABASE_ANON_KEY =
       
       supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
     }
+// CONNEXION
+document.getElementById('loginForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
 
-    // CONNEXION
-    document.getElementById('loginForm').addEventListener('submit', async (e) => {
-      e.preventDefault();
-      
-      if (!supabaseClient) {
-        showError('Client Supabase non disponible');
-        return;
-      }
+  if (!supabaseClient) {
+    showError('Client Supabase non disponible');
+    return;
+  }
 
-      const slug = document.getElementById('slugInput').value.trim();
-      const pin = document.getElementById('pinInput').value.trim();
-      const loginBtn = document.getElementById('loginBtn');
-      const errorDiv = document.getElementById('errorMessage');
+  const slug = document.getElementById('slugInput').value.trim();
+  const pin  = document.getElementById('pinInput').value.trim();
+  const loginBtn = document.getElementById('loginBtn');
+  const errorDiv = document.getElementById('errorMessage');
 
-      if (!/^[0-9]{4}$/.test(pin)) {
-        showError('Le PIN doit contenir exactement 4 chiffres');
-        return;
-      }
+  if (!/^[0-9]{4}$/.test(pin)) {
+    showError('Le PIN doit contenir exactement 4 chiffres');
+    return;
+  }
 
-      loginBtn.disabled = true;
-      loginBtn.textContent = 'Connexion...';
-      errorDiv.classList.remove('show');
+  loginBtn.disabled = true;
+  loginBtn.textContent = 'Connexion...';
+  errorDiv.classList.remove('show');
 
-      try {
-        // APPEL RPC verify_access_pin
-        const { data, error } = await supabaseClient.rpc('verify_access_pin', {
-          p_slug: slug,
-          p_pin: pin
-        });
+  try {
+    // ✅ LOG AVANT RPC
+    console.log("👉 AVANT RPC", { slug, pin });
 
-        if (error) throw error;
+    // ✅ RPC (avec le BON client)
+    const { data, error } = await supabaseClient.rpc('verify_access_pin', {
+      p_slug: slug,
+      p_pin: pin
+    });
 
-        if (data && data.owner_id) {
-          // SESSION OK
-          const expiry = Date.now() + (8 * 60 * 60 * 1000); // 8h
-          
-          const sessionData = {
-            ownerId: data.owner_id,
-            slug: slug,
-            restoName: formatSlugToName(slug),
-            expiry: expiry
-          };
+    // ✅ LOG RETOUR RPC
+    console.log("👉 RPC error =", error);
+    console.log("👉 RPC data =", data);
+    console.log("👉 RPC typeof data =", typeof data);
 
-          localStorage.setItem('digiy_session', JSON.stringify(sessionData));
+    if (error) throw error;
 
-          // Redirection vers l'app
-          window.location.href = '/digiy-resto-caisse/';
-        } else {
-          showError('Slug ou PIN incorrect');
-          loginBtn.disabled = false;
-          loginBtn.textContent = 'Se connecter';
-        }
+    // ⚠️ data peut être string JSON selon ton RPC
+    const result = typeof data === "string" ? JSON.parse(data) : data;
+
+    if (result && result.owner_id) {
+      const expiry = Date.now() + (8 * 60 * 60 * 1000); // 8h
+
+      const sessionData = {
+        ownerId: result.owner_id,
+        slug: result.slug || slug,
+        restoName: result.title || formatSlugToName(slug),
+        expiry
+      };
+
+      localStorage.setItem('digiy_session', JSON.stringify(sessionData));
+      console.log("✅ SESSION SAVED digiy_session =", localStorage.getItem("digiy_session"));
+
+      // ✅ redirect (GitHub Pages SAFE)
+      window.location.href = './index.html?slug=' + encodeURIComponent(sessionData.slug);
+      return;
+    }
+
+    showError('Slug ou PIN incorrect');
+    loginBtn.disabled = false;
+    loginBtn.textContent = 'Se connecter';
+
+  } catch (err) {
+    console.error('Erreur connexion:', err);
+    showError('Erreur de connexion : ' + (err?.message || 'inconnue'));
+    loginBtn.disabled = false;
+    loginBtn.textContent = 'Se connecter';
+  }
       } catch (err) {
         console.error('Erreur connexion:', err);
         showError('Erreur de connexion. Vérifiez votre connexion.');
