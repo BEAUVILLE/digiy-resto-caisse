@@ -1,14 +1,17 @@
 /**
- * 🦅 DIGIY GUARD - Système d'authentification centralisé
- * go_pins + RPC verify_access_pin (côté login)
- * Session : 8 heures
- * Repo: digiy-resto-caisse
+ * 🦅 DIGIY GUARD - Auth centralisé (RESTO)
+ * - Session locale (digiy_session)
+ * - TTL: 90 jours (sliding: on prolonge à chaque ouverture)
+ * - Ne recrée PAS la session (ça c'est le login via RPC)
  */
 (function() {
   'use strict';
 
   const SUPABASE_URL = "https://wesqmwjjtsefyjnluosj.supabase.co";
-  const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Indlc3Ftd2pqdHNlZnlqbmx1b3NqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjUxNzg4ODIsImV4cCI6MjA4MDc1NDg4Mn0.dZfYOc2iL2_wRYL3zExZFsFSBK6AbMeOid2LrIjcTdA";
+  const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmzZSIsInJlZiI6Indlc3Ftd2pqdHNlZnlqbmx1b3NqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjUxNzg4ODIsImV4cCI6MjA4MDc1NDg4Mn0.dZfYOc2iL2_wRYL3zExZFsFSBK6AbMeOid2LrIjcTdA";
+
+  const SESSION_KEY = "digiy_session";
+  const TTL_MS = 90 * 24 * 60 * 60 * 1000; // ✅ 90 jours
 
   function getSupabaseClient() {
     if (typeof window.supabase === 'undefined') {
@@ -19,7 +22,7 @@
 
     try {
       const client = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-      window.supa = client; // ✅ memoize pour éviter 15 clients
+      window.supa = client; // memoize
       return client;
     } catch (err) {
       console.error('❌ Error creating Supabase client:', err);
@@ -27,31 +30,60 @@
     }
   }
 
-  function checkLocalSession() {
-    const sessionStr = localStorage.getItem('digiy_session');
-    if (!sessionStr) return null;
-
+  function readSessionRaw() {
     try {
-      const session = JSON.parse(sessionStr);
-      const now = Date.now();
-
-      if (!session.expiry || session.expiry < now) {
-        localStorage.removeItem('digiy_session');
-        return null;
-      }
-
-      // ✅ compat ownerId / owner_id
-      const ownerId = session.ownerId || session.owner_id;
-      if (!ownerId || !session.slug) {
-        localStorage.removeItem('digiy_session');
-        return null;
-      }
-
-      return { ...session, ownerId };
-    } catch (err) {
-      localStorage.removeItem('digiy_session');
+      const raw = localStorage.getItem(SESSION_KEY);
+      return raw ? JSON.parse(raw) : null;
+    } catch {
       return null;
     }
+  }
+
+  function writeSession(s) {
+    try {
+      localStorage.setItem(SESSION_KEY, JSON.stringify(s));
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
+  function clearSession() {
+    try { localStorage.removeItem(SESSION_KEY); } catch {}
+  }
+
+  function checkLocalSession() {
+    const session = readSessionRaw();
+    if (!session) return null;
+
+    const now = Date.now();
+
+    // ✅ compat ownerId / owner_id
+    const ownerId = session.ownerId || session.owner_id;
+    const slug = session.slug;
+
+    if (!ownerId || !slug) {
+      clearSession();
+      return null;
+    }
+
+    // ✅ expiration
+    if (!session.expiry || session.expiry < now) {
+      console.warn("⛔ Session expirée");
+      clearSession();
+      return null;
+    }
+
+    // ✅ Sliding TTL: on prolonge à chaque ouverture
+    const refreshed = {
+      ...session,
+      ownerId,
+      slug,
+      expiry: now + TTL_MS
+    };
+
+    writeSession(refreshed);
+    return refreshed;
   }
 
   async function guardOrPay(moduleName = 'APP', loginUrl = '/digiy-resto-caisse/login.html') {
@@ -64,22 +96,7 @@
       return false;
     }
 
-// ⏳ EXPIRATION DIGIY (90 jours)
-const expiry = Date.now() + (90 * 24 * 60 * 60 * 1000); // 90 jours
-
-const sessionData = {
-  ownerId: data.owner_id,
-  slug: data.slug,
-  title: data.title || "",
-  expiry
-};
-
-// 💾 Stockage session DIGIY
-localStorage.setItem("digiy_session", JSON.stringify(sessionData));
-
-console.log("🦅 DIGIY SESSION SAVED", sessionData);
-    
-    console.log('✅ Session OK', { ownerId: session.ownerId, slug: session.slug });
+    console.log('✅ Session OK', { ownerId: session.ownerId, slug: session.slug, expiry: session.expiry });
     return true;
   }
 
@@ -88,5 +105,5 @@ console.log("🦅 DIGIY SESSION SAVED", sessionData);
   window.DIGIY.checkLocalSession = checkLocalSession;
   window.DIGIY.getSupabaseClient = getSupabaseClient;
 
-  console.log('🦅 DIGIY Guard loaded - RESTO');
+  console.log('🦅 DIGIY Guard loaded - RESTO (TTL 90j)');
 })();
