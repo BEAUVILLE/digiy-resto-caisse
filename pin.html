@@ -6,12 +6,7 @@
   <title>RESTO PRO - Connexion PIN</title>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
-
+    * { margin: 0; padding: 0; box-sizing: border-box; }
     body {
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
       background: linear-gradient(135deg, #faf7f0 0%, #fff9ed 100%);
@@ -21,7 +16,6 @@
       justify-content: center;
       padding: 20px;
     }
-
     .pin-container {
       background: white;
       border-radius: 24px;
@@ -31,229 +25,100 @@
       box-shadow: 0 10px 40px rgba(0,0,0,0.1);
       border: 1px solid #e1d8c6;
     }
-
-    .pin-header {
-      text-align: center;
-      margin-bottom: 40px;
-    }
-
+    .pin-header { text-align: center; margin-bottom: 40px; }
     .logo {
-      width: 80px;
-      height: 80px;
-      border-radius: 20px;
+      width: 80px; height: 80px; border-radius: 20px;
       background: linear-gradient(135deg, #fff7d1, #ffe9a6);
-      display: inline-grid;
-      place-items: center;
+      display: inline-grid; place-items: center;
       border: 2px solid #ead8a6;
       box-shadow: 0 0 20px rgba(212,175,55,.25);
-      font-size: 40px;
-      margin-bottom: 20px;
+      font-size: 40px; margin-bottom: 20px;
     }
-
-    h1 {
-      color: #1a1c1f;
-      font-size: 32px;
-      font-weight: 900;
-      margin-bottom: 8px;
-      letter-spacing: -0.5px;
-    }
-
-    .subtitle {
-      color: #6b7280;
-      font-size: 15px;
-      font-weight: 500;
-    }
-
-    .form-group {
-      margin-bottom: 24px;
-    }
-
+    h1 { color: #1a1c1f; font-size: 32px; font-weight: 900; margin-bottom: 8px; }
+    .subtitle { color: #6b7280; font-size: 15px; font-weight: 500; }
+    .form-group { margin-bottom: 24px; }
     label {
-      display: block;
-      color: #2b2f36;
-      font-weight: 700;
-      margin-bottom: 10px;
-      font-size: 14px;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
+      display: block; color: #2b2f36; font-weight: 700;
+      margin-bottom: 10px; font-size: 14px;
+      text-transform: uppercase; letter-spacing: 0.5px;
     }
-
     input {
-      width: 100%;
-      padding: 16px 20px;
-      border: 2px solid #e1d8c6;
-      border-radius: 12px;
-      font-size: 18px;
-      transition: all 0.3s;
-      background: #fafafa;
+      width: 100%; padding: 16px 20px;
+      border: 2px solid #e1d8c6; border-radius: 12px;
+      font-size: 18px; transition: all 0.3s; background: #fafafa;
     }
-
     input:focus {
-      outline: none;
-      border-color: #d4af37;
-      background: white;
-      box-shadow: 0 0 0 4px rgba(212,175,55,0.1);
+      outline: none; border-color: #d4af37;
+      background: white; box-shadow: 0 0 0 4px rgba(212,175,55,0.1);
     }
-
     .slug-input {
       font-family: ui-monospace, Menlo, monospace;
       text-transform: lowercase;
     }
-
     .pin-input {
-      text-align: center;
-      letter-spacing: 16px;
-      font-size: 32px;
-      font-weight: 900;
+      text-align: center; letter-spacing: 16px;
+      font-size: 32px; font-weight: 900;
       font-family: ui-monospace, Menlo, monospace;
       padding-left: 24px;
     }
-
-    .pin-dots {
-      display: flex;
-      justify-content: center;
-      gap: 12px;
-      margin-top: 12px;
-    }
-
+    .pin-dots { display: flex; justify-content: center; gap: 12px; margin-top: 12px; }
     .dot {
-      width: 16px;
-      height: 16px;
-      border-radius: 50%;
-      background: #e5e7eb;
-      transition: all 0.2s;
+      width: 16px; height: 16px; border-radius: 50%;
+      background: #e5e7eb; transition: all 0.2s;
     }
-
     .dot.filled {
       background: #d4af37;
       box-shadow: 0 0 0 4px rgba(212,175,55,0.2);
     }
-
     .btn-login {
-      width: 100%;
-      padding: 18px;
+      width: 100%; padding: 18px;
       background: linear-gradient(135deg, #d4af37 0%, #b8952f 100%);
-      color: white;
-      border: none;
-      border-radius: 12px;
-      font-size: 18px;
-      font-weight: 700;
-      cursor: pointer;
+      color: white; border: none; border-radius: 12px;
+      font-size: 18px; font-weight: 700; cursor: pointer;
       transition: all 0.3s;
       box-shadow: 0 4px 12px rgba(212,175,55,0.3);
-      text-transform: uppercase;
-      letter-spacing: 1px;
+      text-transform: uppercase; letter-spacing: 1px;
     }
-
     .btn-login:hover {
       transform: translateY(-2px);
       box-shadow: 0 6px 20px rgba(212,175,55,0.4);
     }
-
-    .btn-login:active {
-      transform: translateY(0);
-    }
-
-    .btn-login:disabled {
-      opacity: 0.5;
-      cursor: not-allowed;
-      transform: none;
-    }
-
+    .btn-login:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
     .error-message {
-      background: #fee;
-      border: 2px solid #fca5a5;
-      color: #991b1b;
-      padding: 14px 16px;
-      border-radius: 10px;
-      margin-bottom: 24px;
-      font-size: 14px;
-      font-weight: 600;
-      display: none;
+      background: #fee; border: 2px solid #fca5a5; color: #991b1b;
+      padding: 14px 16px; border-radius: 10px; margin-bottom: 24px;
+      font-size: 14px; font-weight: 600; display: none;
       animation: shake 0.4s;
     }
-
-    .error-message.show {
-      display: block;
-    }
-
+    .error-message.show { display: block; }
     @keyframes shake {
       0%, 100% { transform: translateX(0); }
       25% { transform: translateX(-10px); }
       75% { transform: translateX(10px); }
     }
-
     .info-box {
-      background: #fef3c7;
-      border: 2px solid #fde047;
-      color: #713f12;
-      padding: 16px;
-      border-radius: 10px;
-      margin-top: 24px;
-      font-size: 13px;
-      font-weight: 600;
+      background: #fef3c7; border: 2px solid #fde047; color: #713f12;
+      padding: 16px; border-radius: 10px; margin-top: 24px;
+      font-size: 13px; font-weight: 600;
     }
-
-    .info-box strong {
-      display: block;
-      margin-bottom: 8px;
-      font-size: 14px;
-    }
-
+    .info-box strong { display: block; margin-bottom: 8px; font-size: 14px; }
     .info-box code {
-      background: #fff;
-      padding: 2px 8px;
-      border-radius: 4px;
+      background: #fff; padding: 2px 8px; border-radius: 4px;
       font-family: ui-monospace, Menlo, monospace;
-      color: #d97706;
-      font-weight: 700;
+      color: #d97706; font-weight: 700;
     }
-
-    .help-text {
-      text-align: center;
-      color: #6b7280;
-      font-size: 13px;
-      margin-top: 20px;
-    }
-
     .session-info {
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      gap: 8px;
-      margin-top: 16px;
-      color: #6b7280;
-      font-size: 12px;
-      font-weight: 600;
+      display: flex; justify-content: center; align-items: center;
+      gap: 8px; margin-top: 16px; color: #6b7280;
+      font-size: 12px; font-weight: 600;
     }
-
     .status-indicator {
-      width: 8px;
-      height: 8px;
-      border-radius: 50%;
-      background: #10b981;
-      animation: pulse 2s infinite;
+      width: 8px; height: 8px; border-radius: 50%;
+      background: #10b981; animation: pulse 2s infinite;
     }
-
     @keyframes pulse {
       0%, 100% { opacity: 1; }
       50% { opacity: 0.5; }
-    }
-
-    @media (max-width: 480px) {
-      .pin-container {
-        padding: 30px 20px;
-      }
-
-      h1 {
-        font-size: 28px;
-      }
-
-      .pin-input {
-        letter-spacing: 12px;
-        font-size: 28px;
-        padding-left: 16px;
-      }
     }
   </style>
 </head>
@@ -319,39 +184,30 @@
       Slug: <code>resto-chez-fatou-saly</code><br>
       PIN: <code>4888</code>
     </div>
-
-    <div class="help-text">
-      Besoin d'aide ? Contactez votre administrateur
-    </div>
   </div>
 
   <script>
-    // CONFIG SUPABASE - Utiliser le client existant ou en créer un nouveau
+    // ✅ BONNE URL SUPABASE (celle de ton index.html RESTO PRO)
+    const SUPABASE_URL = "https://wesqmwjjtsefyjnluosj.supabase.co";
+    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Indlc3Ftd2pqdHNlZnlqbmx1b3NqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjUxNzg4ODIsImV4cCI6MjA4MDc1NDg4Mn0.dZfYOc2iL2_wRYL3zExZFsFSBK6AbMeOid2LrIjcTdA";
+    
     let supabaseClient;
     
-    // Vérifier si Supabase est chargé
     if (typeof window.supabase === 'undefined') {
       console.error('⚠️ Supabase non chargé !');
       alert('Erreur : Bibliothèque Supabase non disponible');
     } else {
-      // Créer le client Supabase SANS redéclaration
-     const SUPABASE_URL = "https://wesqmwjjtsefyjnluosj.supabase.co";
-const SUPABASE_ANON_KEY =
-  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Indlc3Ftd2pqdHNlZnlqbmx1b3NqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjUxNzg4ODIsImV4cCI6MjA4MDc1NDg4Mn0.dZfYOc2iL2_wRYL3zExZFsFSBK6AbMeOid2LrIjcTdA";
-    
       supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+      console.log('✅ Client Supabase créé');
     }
 
-    // Elements
     const pinInput = document.getElementById('pinInput');
     const pinDots = document.getElementById('pinDots');
     const slugInput = document.getElementById('slugInput');
 
-    // PIN dots animation
     pinInput.addEventListener('input', (e) => {
       const value = e.target.value;
       const dots = pinDots.querySelectorAll('.dot');
-      
       dots.forEach((dot, index) => {
         if (index < value.length) {
           dot.classList.add('filled');
@@ -361,7 +217,6 @@ const SUPABASE_ANON_KEY =
       });
     });
 
-    // Auto-format slug (lowercase, replace spaces with dashes)
     slugInput.addEventListener('input', (e) => {
       let value = e.target.value.toLowerCase();
       value = value.replace(/\s+/g, '-');
@@ -369,7 +224,6 @@ const SUPABASE_ANON_KEY =
       e.target.value = value;
     });
 
-    // CONNEXION
     document.getElementById('pinForm').addEventListener('submit', async (e) => {
       e.preventDefault();
       
@@ -383,7 +237,6 @@ const SUPABASE_ANON_KEY =
       const loginBtn = document.getElementById('loginBtn');
       const errorDiv = document.getElementById('errorMessage');
 
-      // Validation
       if (!slug) {
         showError('Le nom du restaurant est requis');
         return;
@@ -399,20 +252,24 @@ const SUPABASE_ANON_KEY =
       errorDiv.classList.remove('show');
 
       try {
-        // APPEL RPC verify_access_pin
+        console.log('🔍 Appel RPC verify_access_pin...');
+        console.log('Slug:', slug);
+        console.log('PIN:', pin);
+
         const { data, error } = await supabaseClient.rpc('verify_access_pin', {
           p_slug: slug,
           p_pin: pin
         });
 
         if (error) {
-          console.error('Erreur RPC:', error);
+          console.error('❌ Erreur RPC:', error);
           throw error;
         }
 
+        console.log('✅ Réponse reçue:', data);
+
         if (data && data.owner_id) {
-          // SESSION OK
-          const expiry = Date.now() + (8 * 60 * 60 * 1000); // 8h
+          const expiry = Date.now() + (8 * 60 * 60 * 1000);
           
           const sessionData = {
             ownerId: data.owner_id,
@@ -424,11 +281,11 @@ const SUPABASE_ANON_KEY =
 
           localStorage.setItem('digiy_session', JSON.stringify(sessionData));
 
-          // Animation succès
           loginBtn.innerHTML = '✅ Connexion réussie !';
           loginBtn.style.background = 'linear-gradient(135deg, #10b981 0%, #059669 100%)';
 
-          // Redirection vers l'app
+          console.log('✅ Redirection vers /digiy-resto-caisse/');
+          
           setTimeout(() => {
             window.location.href = '/digiy-resto-caisse/';
           }, 800);
@@ -438,8 +295,8 @@ const SUPABASE_ANON_KEY =
           loginBtn.innerHTML = '🚀 Accéder';
         }
       } catch (err) {
-        console.error('Erreur connexion:', err);
-        showError('⚠️ Erreur de connexion. Vérifiez votre connexion Internet.');
+        console.error('❌ Erreur connexion:', err);
+        showError('⚠️ Erreur: ' + (err.message || 'Connexion impossible'));
         loginBtn.disabled = false;
         loginBtn.innerHTML = '🚀 Accéder';
       }
@@ -449,21 +306,13 @@ const SUPABASE_ANON_KEY =
       const errorDiv = document.getElementById('errorMessage');
       errorDiv.textContent = message;
       errorDiv.classList.add('show');
-      
-      // Auto-hide après 5 secondes
-      setTimeout(() => {
-        errorDiv.classList.remove('show');
-      }, 5000);
+      setTimeout(() => errorDiv.classList.remove('show'), 5000);
     }
 
     function formatSlugToName(slug) {
-      return slug
-        .split('-')
-        .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-        .join(' ');
+      return slug.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
     }
 
-    // Vérifier si déjà connecté au chargement
     window.addEventListener('DOMContentLoaded', () => {
       const session = localStorage.getItem('digiy_session');
       if (session) {
@@ -472,44 +321,17 @@ const SUPABASE_ANON_KEY =
           const now = Date.now();
           
           if (data.expiry && data.expiry > now && data.ownerId) {
-            // Session valide, rediriger immédiatement
             console.log('Session valide détectée, redirection...');
             window.location.href = '/digiy-resto-caisse/';
             return;
           } else {
-            // Session expirée
             localStorage.removeItem('digiy_session');
           }
         } catch (e) {
-          // Session corrompue
           localStorage.removeItem('digiy_session');
         }
       }
-
-      // Focus sur le champ slug
       slugInput.focus();
-    });
-
-    // Keyboard shortcuts
-    document.addEventListener('keydown', (e) => {
-      // Ctrl/Cmd + K pour focus sur slug
-      if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
-        e.preventDefault();
-        slugInput.focus();
-      }
-      
-      // Ctrl/Cmd + P pour focus sur PIN
-      if ((e.ctrlKey || e.metaKey) && e.key === 'p') {
-        e.preventDefault();
-        pinInput.focus();
-      }
-    });
-
-    // Auto-focus sur PIN quand slug est rempli
-    slugInput.addEventListener('blur', () => {
-      if (slugInput.value.trim() && !pinInput.value) {
-        setTimeout(() => pinInput.focus(), 100);
-      }
     });
   </script>
 
