@@ -5,11 +5,28 @@
 
 window.DIGIY = window.DIGIY || {};
 
-// Config Supabase
-const SUPABASE_URL = 'https://gbnuvxyztjdlzsyzypnq.supabase.co';
-const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdibnV2eHl6dGpkbHpzeXp5cG5xIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzY3NzI0NDEsImV4cCI6MjA1MjM0ODQ0MX0.OThgIDmgmF9y_6bIVbRWwjdOq1SFMsNuRWwUQmHlMZM';
+// Utiliser le Supabase déjà existant ou en créer un nouveau
+if (typeof window.supabase === 'undefined') {
+  console.error('⚠️ Supabase non chargé ! Vérifie que le script Supabase est chargé AVANT guard.js');
+}
 
-const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+// Récupérer ou créer le client Supabase
+const getSupabaseClient = () => {
+  // Si un client Supabase global existe déjà (déclaré dans index.html), l'utiliser
+  if (window.supa) {
+    return window.supa;
+  }
+  
+  // Sinon, créer un nouveau client
+  if (window.supabase && window.supabase.createClient) {
+    const SUPABASE_URL = 'https://gbnuvxyztjdlzsyzypnq.supabase.co';
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdibnV2eHl6dGpkbHpzeXp5cG5xIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzY3NzI0NDEsImV4cCI6MjA1MjM0ODQ0MX0.OThgIDmgmF9y_6bIVbRWwjdOq1SFMsNuRWwUQmHlMZM';
+    return window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  }
+  
+  console.error('⚠️ Impossible de créer le client Supabase');
+  return null;
+};
 
 /**
  * Guard principal : vérifie l'accès au module
@@ -21,6 +38,11 @@ window.DIGIY.guardOrPay = async function(moduleName, loginUrl) {
   const statusEl = document.getElementById('guard_status');
   
   try {
+    const supabaseClient = getSupabaseClient();
+    if (!supabaseClient) {
+      throw new Error('Client Supabase non disponible');
+    }
+
     // 1. Vérifier session locale
     const session = localStorage.getItem('digiy_session');
     if (!session) {
@@ -48,7 +70,7 @@ window.DIGIY.guardOrPay = async function(moduleName, loginUrl) {
     }
 
     // 4. Vérifier l'abonnement au module
-    const { data: subData, error: subError } = await supabase
+    const { data: subData, error: subError } = await supabaseClient
       .from('subscriptions')
       .select('*')
       .eq('owner_id', sessionData.ownerId)
@@ -87,7 +109,7 @@ window.DIGIY.guardOrPay = async function(moduleName, loginUrl) {
 /**
  * Déconnexion
  */
-window.DIGIY.logout = function(loginUrl = '/digiy-resto/login.html') {
+window.DIGIY.logout = function(loginUrl = '/digiy-resto-caisse/pin.html') {
   localStorage.removeItem('digiy_session');
   window.location.href = loginUrl;
 };
