@@ -64,6 +64,21 @@
       return false;
     }
 
+// ⏳ EXPIRATION DIGIY (90 jours)
+const expiry = Date.now() + (90 * 24 * 60 * 60 * 1000); // 90 jours
+
+const sessionData = {
+  ownerId: data.owner_id,
+  slug: data.slug,
+  title: data.title || "",
+  expiry
+};
+
+// 💾 Stockage session DIGIY
+localStorage.setItem("digiy_session", JSON.stringify(sessionData));
+
+console.log("🦅 DIGIY SESSION SAVED", sessionData);
+    
     console.log('✅ Session OK', { ownerId: session.ownerId, slug: session.slug });
     return true;
   }
