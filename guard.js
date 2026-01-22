@@ -35,22 +35,20 @@ window.DIGIY = window.DIGIY || {};
   }
 
   /**
-   * Vérifie l'accès à un module
-   * moduleName = "resto" | "loc" | "driver"
-   */
-  window.DIGIY.guardOrPay = async function(moduleName, loginUrl){
-    const statusEl = document.getElementById("guard_status");
+   // 🔥 Vérifier catégorie RESTO
+const { data, error } = await supabaseClient
+  .from('go_pins')
+  .select('id')
+  .eq('owner_id', sessionData.ownerId)
+  .eq('slug', sessionData.slug)
+  .eq('is_active', true)
+  .single();
 
-    try {
-      const sb = getSb();
-      if (!sb) throw new Error("Supabase non prêt");
-
-      const s = getSession();
-      if (!s || !s.ownerId || !s.slug) {
-        statusEl && (statusEl.textContent = "🔐 Session absente");
-        setTimeout(() => go(loginUrl), 600);
-        return false;
-      }
+if (error || !data) {
+  if (statusEl) statusEl.textContent = '❌ Accès non autorisé';
+  setTimeout(() => window.location.href = loginUrl, 1200);
+  return false;
+}
 
       // 🔎 Vérifier que CE SLUG appartient bien au pro + module actif
       const { data, error } = await sb
