@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>RESTO PRO - Connexion</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .login-container {
+      background: white;
+      border-radius: 20px;
+      padding: 40px;
+      max-width: 400px;
+      width: 100%;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+    }
+
+    .login-header {
+      text-align: center;
+      margin-bottom: 30px;
+    }
+
+    .logo {
+      width: 60px;
+      height: 60px;
+      border-radius: 15px;
+      background: linear-gradient(135deg, #fff3c4, #ffe08a);
+      display: inline-grid;
+      place-items: center;
+      border: 2px solid #ead8a6;
+      box-shadow: 0 0 20px rgba(212,175,55,.3);
+      font-size: 30px;
+      margin-bottom: 20px;
+    }
+
+    h1 {
+      color: #667eea;
+      font-size: 28px;
+      margin-bottom: 10px;
+    }
+
+    p {
+      color: #666;
+      font-size: 14px;
+    }
+
+    .form-group {
+      margin-bottom: 20px;
+    }
+
+    label {
+      display: block;
+      color: #333;
+      font-weight: 600;
+      margin-bottom: 8px;
+      font-size: 14px;
+    }
+
+    input {
+      width: 100%;
+      padding: 12px 16px;
+      border: 2px solid #e0e0e0;
+      border-radius: 10px;
+      font-size: 16px;
+      transition: all 0.3s;
+    }
+
+    input:focus {
+      outline: none;
+      border-color: #667eea;
+      background: #f8f9ff;
+    }
+
+    .pin-input {
+      text-align: center;
+      letter-spacing: 8px;
+      font-size: 24px;
+      font-weight: bold;
+    }
+
+    .btn-login {
+      width: 100%;
+      padding: 14px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      border: none;
+      border-radius: 10px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: transform 0.2s;
+    }
+
+    .btn-login:hover {
+      transform: translateY(-2px);
+    }
+
+    .btn-login:active {
+      transform: translateY(0);
+    }
+
+    .btn-login:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+
+    .error-message {
+      background: #fee;
+      color: #c33;
+      padding: 12px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+      font-size: 14px;
+      display: none;
+    }
+
+    .error-message.show {
+      display: block;
+    }
+
+    .info-box {
+      background: #f0f9ff;
+      border: 1px solid #bae6fd;
+      color: #0c4a6e;
+      padding: 12px;
+      border-radius: 8px;
+      margin-top: 20px;
+      font-size: 13px;
+      text-align: center;
+    }
+
+    .demo-info {
+      background: #fef3c7;
+      border: 1px solid #fde047;
+      color: #713f12;
+      padding: 10px;
+      border-radius: 6px;
+      margin-top: 15px;
+      font-size: 12px;
+    }
+
+    .demo-info strong {
+      display: block;
+      margin-bottom: 5px;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="login-container">
+    <div class="login-header">
+      <div class="logo">🍽️</div>
+      <h1>RESTO PRO</h1>
+      <p>Caisse Restaurant - Connexion</p>
+    </div>
+
+    <div class="error-message" id="errorMessage"></div>
+
+    <form id="loginForm">
+      <div class="form-group">
+        <label for="slugInput">Nom du restaurant (slug)</label>
+        <input 
+          type="text" 
+          id="slugInput" 
+          placeholder="resto-chez-fatou-saly"
+          autocomplete="off"
+          required
+        >
+      </div>
+
+      <div class="form-group">
+        <label for="pinInput">Code PIN (4 chiffres)</label>
+        <input 
+          type="text" 
+          id="pinInput" 
+          placeholder="****"
+          maxlength="4"
+          pattern="[0-9]{4}"
+          class="pin-input"
+          autocomplete="off"
+          required
+        >
+      </div>
+
+      <button type="submit" class="btn-login" id="loginBtn">
+        Se connecter
+      </button>
+    </form>
+
+    <div class="demo-info">
+      <strong>🧪 Compte de test :</strong>
+      Slug: <code>resto-chez-fatou-saly</code><br>
+      PIN: <code>4888</code>
+    </div>
+
+    <div class="info-box">
+      Session valide 8 heures • Accès sécurisé
+    </div>
+  </div>
+
+  <script>
+    // CONFIG SUPABASE
+    const SUPABASE_URL = 'https://gbnuvxyztjdlzsyzypnq.supabase.co';
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdibnV2eHl6dGpkbHpzeXp5cG5xIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzY3NzI0NDEsImV4cCI6MjA1MjM0ODQ0MX0.OThgIDmgmF9y_6bIVbRWwjdOq1SFMsNuRWwUQmHlMZM';
+    
+    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    // CONNEXION
+    document.getElementById('loginForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      
+      const slug = document.getElementById('slugInput').value.trim();
+      const pin = document.getElementById('pinInput').value.trim();
+      const loginBtn = document.getElementById('loginBtn');
+      const errorDiv = document.getElementById('errorMessage');
+
+      if (!/^[0-9]{4}$/.test(pin)) {
+        showError('Le PIN doit contenir exactement 4 chiffres');
+        return;
+      }
+
+      loginBtn.disabled = true;
+      loginBtn.textContent = 'Connexion...';
+      errorDiv.classList.remove('show');
+
+      try {
+        // APPEL RPC verify_access_pin
+        const { data, error } = await supabase.rpc('verify_access_pin', {
+          p_slug: slug,
+          p_pin: pin
+        });
+
+        if (error) throw error;
+
+        if (data && data.owner_id) {
+          // SESSION OK
+          const expiry = Date.now() + (8 * 60 * 60 * 1000); // 8h
+          
+          const sessionData = {
+            ownerId: data.owner_id,
+            slug: slug,
+            restoName: formatSlugToName(slug),
+            expiry: expiry
+          };
+
+          localStorage.setItem('digiy_session', JSON.stringify(sessionData));
+
+          // Redirection vers l'app
+          window.location.href = '/digiy-resto-caisse/';
+        } else {
+          showError('Slug ou PIN incorrect');
+          loginBtn.disabled = false;
+          loginBtn.textContent = 'Se connecter';
+        }
+      } catch (err) {
+        console.error('Erreur connexion:', err);
+        showError('Erreur de connexion. Vérifiez votre connexion.');
+        loginBtn.disabled = false;
+        loginBtn.textContent = 'Se connecter';
+      }
+    });
+
+    function showError(message) {
+      const errorDiv = document.getElementById('errorMessage');
+      errorDiv.textContent = message;
+      errorDiv.classList.add('show');
+    }
+
+    function formatSlugToName(slug) {
+      return slug
+        .split('-')
+        .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+        .join(' ');
+    }
+
+    // Vérifier si déjà connecté
+    window.addEventListener('DOMContentLoaded', () => {
+      const session = localStorage.getItem('digiy_session');
+      if (session) {
+        try {
+          const data = JSON.parse(session);
+          const now = Date.now();
+          
+          if (data.expiry && data.expiry > now && data.ownerId) {
+            // Session valide, rediriger
+            window.location.href = '/digiy-resto-caisse/';
+          }
+        } catch (e) {
+          // Session invalide, rester sur login
+        }
+      }
+    });
+  </script>
+
+</body>
+</html>
