@@ -1591,7 +1591,7 @@ if ('serviceWorker' in navigator) {
 
   if (isProd) {
     window.addEventListener('load', () => {
-      navigator.serviceWorker.register('./sw.js')
+      navigator.serviceWorker.register(new URL('./sw.js', location.href))
         .then((registration) => {
           console.log('✅ Service Worker enregistré:', registration.scope);
         })
